@@ -1,0 +1,13 @@
+node_modules/
+node-td-conversions.cpp
+node-td-conversions.h
+td-node-conversions.cpp
+td-node-conversions.h
+build/
+*.dll
+td_api.d.ts
+td_api.json
+*.node
+TdNode.d.ts
+index.d.ts
+.vscode
