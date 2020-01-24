@@ -99,10 +99,7 @@ if (process.platform === "win32") {
     const ts_def = require("./generate_tl_ts.js");
     console.log("Saving TypeScript definitions for schema");
     fs.writeFileSync("./index.d.ts", ts_def.result);
-    console.log("Generating TD to JS conversion code");
-    require("./generate_td_js_conversions.js");
-    console.log("Generating JS to TD conversion code");
-    require("./generate_js_td_conversions.js");
+    require("./generate_converters.js");
     console.log("Creating working directory for TdNode build");
     fs.mkdirSync("./td/example/node");
     console.log("Copying source files for TdNode build");
@@ -117,7 +114,7 @@ if (process.platform === "win32") {
     console.log("Doing Cmake-js install");
     exec("cmake-js install", "./td/example/node");
     console.log("Configuring TdNode");
-    exec("cmake-js configure", "./td/example/node");
+    exec("cmake-js configure --CDNODE_ADDON_API_DIR="+ require("node-addon-api").include, "./td/example/node");
     console.log("Building TdNode");
     exec("cmake-js build", "./td/example/node");
     console.log("Copying TdNode.node");

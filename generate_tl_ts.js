@@ -130,36 +130,15 @@ export type _FUNCTIONS = ${[...all_function_names_in_functions].join(" | ") || "
 
 /**
  * Native Node.JS TDLib interface.
- *
- * All methods in class must strictly the exact number of arguments requested,
- * no more and no less.
- * You should not allow the client to be garbage collected even if it is closed.
- * The client will be properly and silently closed when the process exits.
  */
-export class TelegramClient {
+export class TdNode {
     public constructor();
-    /** 
-     * Currently not stable,
-     * for now you may use the \`close\` function in TDLib.
-     */
-    private destroy();
-    /** Sets the log level of TDLib. 0 for no logging; 5 for most logging; larger than 5 for special circumstances */
-    public static setLogLevel(level: number): void;
-    /** Set the callback function for data received that does not have a correlating request */
-    public listen(callback: (this: this, data: Update | undefined, error: undefined | Error) => void): void;
-    /** Starts polling for updates */
-    public start(): void;
-    //#region functions`;
-for (const i of functions) {
-    if (i.description) {
-        result += `
-        ${createStarComment(i.description).replace(/\n/g,"\n    ")}`;
-    }
-    result += `
-    public send(request: ${i.name}): Promise<${i.returns}>;`;
-}
-result += `
-    //#endregion
+    /** Receive data from TDLib */
+    public receive(timeout?: number | undefined): Promise<null | _CONSTRUCTORS>;
+    /** Sends data to TDLib */
+    public send(request: _FUNCTIONS): void;
+    /** Execute a request synchronously, will only work for certain requests. Not bound to any particular client */
+    public static execute(request: _FUNCTIONS): _CONSTRUCTORS;
 }
 
 `;

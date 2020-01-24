@@ -6,236 +6,227 @@
 #include <td/telegram/td_api.h>
 #include <td/telegram/td_api.hpp>
 #include <napi.h>
-#include "node-td-conversions.h"
-#include "td-node-conversions.h"
+#include "td-to-js.cpp"
+#include "js-to-td.cpp"
 #include "TdNode.h"
-NodeTd::TelegramManager::TelegramManager() noexcept {
-    client = new td::Client();
+
+
+TdNode::TelegramManager::TelegramManager() {
 }
-NodeTd::TelegramManager::~TelegramManager() noexcept {
-    if (!is_td_destroyed) {
-        delete client;
+TdNode::TelegramManager::~TelegramManager() noexcept {
+    while (js_alive || worker_alive) {
+        is_receive_locked = true;
+        std::this_thread::yield();
     }
+    is_receive_locked = true;
+    delete client;
 }
-void NodeTd::TelegramManager::Start() {
-    if (is_td_destroyed) throw std::exception(ERROR_REASON_TDLIB_CLIENT_DESTROYED);
-    if (is_receiving) throw std::exception(ERROR_REASON_RECEIVING_ALREADY_STARTED);
-    if (has_left_js) throw std::exception(ERROR_REASON_CLIENT_LEFT_JS_SCOPE);
-    is_receiving = true;
-    std::thread([this]() {
-        while (!is_td_destroyed && !has_left_js) {
-            td::Client::Response response = client->receive(60.0);
-            if (response.object) {
-                responses.push(std::move(response));
+td::Client::Response TdNode::TelegramManager::receive(double timeout) {
+    return std::move(client->receive(timeout));
+}
+td::td_api::object_ptr<td::td_api::Object> execute(td::td_api::object_ptr<td::td_api::Function> request) {
+    return std::move(td::Client::execute({ 0, std::move(request)}).object);
+}
+void TdNode::TelegramManager::send(td::Client::Request request) {
+    client->send(std::move(request));
+}
+Napi::Value TdNode::TelegramManager::ConvertResultToJavaScript(Napi::Env env, td::Client::Response tg_response) {
+    Napi::EscapableHandleScope scope(env);
+    Napi::Value result = ToJavaScript::AnyUnknownObject(env, std::move(tg_response.object));
+    if (tg_response.id) {
+        auto it = request_ids.find(tg_response.id);
+        if (it != request_ids.end()) {
+            Napi::Value req_info = std::move(it->second);
+            request_ids.erase(it);
+            if (result.IsObject()) {
+                result.As<Napi::Object>().Set("@extra", req_info);
+            } else {
+                // fallback object if we get null from conversion to allow for @extra
+                Napi::Object fallbackObject = Napi::Object::New(env);
+                fallbackObject.Set("@extra", req_info);
+                fallbackObject.Set("@helpInfo", Napi::String::New(env, "Normally it should be impossible to get an object like this, however when converting to javascript, we somehow ended up with null. The @extra field has been provided to assist in debugging"));
+                return scope.Escape(fallbackObject);
             }
         }
-        is_receiving = false;
-        FinaliseClient();
-    }).detach();
+    }
+    return scope.Escape(result);
 }
-const bool NodeTd::TelegramManager::IsDestroyed() const noexcept {
-    return is_td_destroyed;
-}
-const bool NodeTd::TelegramManager::IsReceiving() const noexcept {
-    return is_receiving;
-}
-const bool NodeTd::TelegramManager::HasLeftJavaScript() const noexcept {
-    return has_left_js;
-}
-void NodeTd::TelegramManager::LeaveJavaScriptContext() {
-    if (has_left_js) throw std::exception(ERROR_REASON_CLIENT_LEFT_JS_SCOPE);
-    has_left_js = true;
-    FinaliseClient();
-}
-void NodeTd::TelegramManager::FinaliseClient() {
-    if (!is_receiving && has_left_js) {
-        if (!is_td_destroyed) {
-            delete client;
-        }
-        delete this;
+void TdNode::TelegramManager::StartJavaScriptLifetime() {
+    if (++js_alive == 0) {
+        js_alive = 0b11111111;
+        throw std::exception("JavaScript lifetimes exceeds uint8 limit");
     }
 }
-Napi::Object NodeTd::JavaScriptManager::Init(Napi::Env env, Napi::Object exports) {
-    Napi::Function func = DefineClass(env, "TelegramClient", {
-        InstanceMethod("listen", &JavaScriptManager::Listen),
-        InstanceMethod("start", &JavaScriptManager::Start),
-        InstanceMethod("destroy", &JavaScriptManager::Destroy),
-        InstanceMethod("send", &JavaScriptManager::Send),
-        StaticMethod("setLogLevel", &JavaScriptManager::SetLogLevel)
+void TdNode::TelegramManager::EndJavaScriptLifetime() {
+    if (--js_alive == 0b11111111) {
+        js_alive = 0;
+        throw std::exception("JavaScript lifetimes went below 0");
+    }
+}
+void TdNode::TelegramManager::StartWorkerLifetime() {
+    if (++worker_alive == 0) {
+        worker_alive = 0b11111111;
+        throw std::exception("Worker lifetimes exceeds uint8 limit");
+    }
+}
+void TdNode::TelegramManager::EndWorkerLifetime() {
+    if (--worker_alive == 0b11111111) {
+        worker_alive = 0;
+        throw std::exception("Worker lifetimes went below 0");
+    }
+}
+Napi::Object TdNode::JavaScriptManager::Init(Napi::Env env, Napi::Object exports) {
+    Napi::Function func = DefineClass(env, "TdNode", {
+        InstanceMethod("send", &TdNode::JavaScriptManager::tg_send),
+        InstanceMethod("receive", &TdNode::JavaScriptManager::tg_receive),
+        StaticMethod("execute", &TdNode::JavaScriptManager::execute)
     });
     constructor = Napi::Persistent(func);
     constructor.SuppressDestruct();
-    exports.Set("TelegramClient", func);
+    exports.Set("TdNode", func);
     return exports;
 }
-NodeTd::JavaScriptManager::JavaScriptManager(const Napi::CallbackInfo &info) : Napi::ObjectWrap<JavaScriptManager>(info) {
-    client = new TelegramManager();
-    is_accessible = true;
-}
-void NodeTd::JavaScriptManager::Finalize(Napi::Env env) {
-    if (is_callback_set) {
-        callback_function.Unref();
-    }
-    if (is_accessible) {
-        try {
-            client->LeaveJavaScriptContext();
-        } catch (std::exception e) {
-            // ignore the exception if it comes.
-        }
-    }
-}
-Napi::FunctionReference NodeTd::JavaScriptManager::constructor;
-void NodeTd::JavaScriptManager::Start(const Napi::CallbackInfo &info) {
-    if (info.Length() == 0) {
-        if (is_accessible) {
-            if (is_callback_set) {
-                try {
-                    client->Start();
-                    new AsyncUpdateController(info.Env(), this, client);
-                } catch (std::exception e) {
-                    Napi::Error::New(info.Env(), e.what()).ThrowAsJavaScriptException();
+TdNode::JavaScriptManager::JavaScriptManager(const Napi::CallbackInfo &info) : Napi::ObjectWrap<TdNode::JavaScriptManager>(info) {
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    bool did_set_client = false;
+    if (info.Length() >= 1) {
+        Napi::HandleScope scope(env);
+        Napi::Value arg_0 = info[0];
+        if (arg_0.IsObject()) {
+            Napi::HandleScope scope(env);
+            Napi::Object obj_arg_0 = arg_0.As<Napi::Object>();
+            if (obj_arg_0.InstanceOf(constructor.Value())) {
+                Napi::HandleScope scope(env);
+                TdNode::JavaScriptManager *old_instance = Unwrap(obj_arg_0);
+                if (old_instance == nullptr) {
+                    Napi::TypeError::New(env, "Cannot clone client: client was destroyed already").ThrowAsJavaScriptException();
+                    return;
+                } else {
+                    tg = old_instance->tg;
+                    did_set_client = true;
                 }
             } else {
-                Napi::Error::New(info.Env(), ERROR_REASON_NO_CALLBACK_FUNCTION_SET).ThrowAsJavaScriptException();
+                Napi::TypeError::New(env, "Cannot clone client: client is not an instance of TdNode").ThrowAsJavaScriptException();
+                return;
             }
-        } else {
-            Napi::Error::New(info.Env(), ERROR_REASON_TELEGRAM_MANAGER_NOT_ACCESSIBLE).ThrowAsJavaScriptException();
-        }
-    } else {
-        Napi::RangeError::New(info.Env(), ERROR_REASON_TOO_MANY_ARGUMENTS).ThrowAsJavaScriptException();
-    }
-}
-void NodeTd::JavaScriptManager::Destroy(const Napi::CallbackInfo &info) {
-    if (info.Length() == 0) {
-        if (is_accessible) {
-            try {
-                client->LeaveJavaScriptContext();
-                is_accessible = false;
-            } catch (std::exception e) {
-                Napi::Error::New(info.Env(), e.what()).ThrowAsJavaScriptException();
-            }
-        } else {
-            Napi::Error::New(info.Env(), ERROR_REASON_TELEGRAM_MANAGER_NOT_ACCESSIBLE).ThrowAsJavaScriptException();
-        }
-    } else {
-        Napi::RangeError::New(info.Env(), ERROR_REASON_TOO_MANY_ARGUMENTS).ThrowAsJavaScriptException();
-    }
-}
-void NodeTd::JavaScriptManager::Listen(const Napi::CallbackInfo &info) {
-    if (info.Length() == 1) {
-        if (is_accessible) {
-            Napi::Function func = info[0].As<Napi::Function>();
-            if (is_callback_set) {
-                callback_function.Unref();
-            }
-            callback_function = Napi::Persistent(func);
-            is_callback_set = true;
-        } else {
-            Napi::Error::New(info.Env(), ERROR_REASON_TELEGRAM_MANAGER_NOT_ACCESSIBLE).ThrowAsJavaScriptException();
-        }
-    } else if (info.Length() == 0) {
-        Napi::RangeError::New(info.Env(), ERROR_REASON_NOT_ENOUGH_ARGUMENTS).ThrowAsJavaScriptException();
-    } else {
-        Napi::RangeError::New(info.Env(), ERROR_REASON_TOO_MANY_ARGUMENTS).ThrowAsJavaScriptException();
-    }
-}
-Napi::Value NodeTd::JavaScriptManager::Send(const Napi::CallbackInfo &info) {
-    Napi::Env env = info.Env();
-    if (info.Length() == 1) {
-        if (is_accessible) {
-            td::td_api::object_ptr<td::td_api::Function> request = GetArbitraryFunction(info[0]);
-            uint64_t request_id = next_request_id++;
-            Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
-            client->client->send({ request_id, std::move(request) });
-            pending_requests.emplace(request_id, std::move(deferred));
-            return pending_requests.find(request_id)->second.Promise();
-        } else {
-            Napi::Error::New(env, ERROR_REASON_TELEGRAM_MANAGER_NOT_ACCESSIBLE).ThrowAsJavaScriptException();
-            return env.Undefined();
-        }
-    } else if (info.Length() == 0) {
-        Napi::RangeError::New(env, ERROR_REASON_NOT_ENOUGH_ARGUMENTS).ThrowAsJavaScriptException();
-        return env.Undefined();
-    } else {
-        Napi::RangeError::New(env, ERROR_REASON_TOO_MANY_ARGUMENTS).ThrowAsJavaScriptException();
-        return env.Undefined();
-    }
-}
-void NodeTd::JavaScriptManager::SetLogLevel(const Napi::CallbackInfo &info) {
-    if (info.Length() == 1) {
-        const Napi::Value new_log_level = info[0];
-        const std::int32_t set_log_level_to = new_log_level.As<Napi::Number>().Int32Value();
-        td::Client::execute({ 0, td::td_api::make_object<td::td_api::setLogVerbosityLevel>(set_log_level_to)});
-    } else if (info.Length() == 0) {
-        Napi::RangeError::New(info.Env(), ERROR_REASON_NOT_ENOUGH_ARGUMENTS).ThrowAsJavaScriptException();
-    } else {
-        Napi::RangeError::New(info.Env(), ERROR_REASON_TOO_MANY_ARGUMENTS).ThrowAsJavaScriptException();
-    }
-}
-NodeTd::AsyncUpdateController::AsyncUpdateController(Napi::Env env, JavaScriptManager *js_client, TelegramManager *td_client) : Napi::AsyncWorker(env), js_manager(js_client), td_manager(td_client) {
-    Queue();
-    js_client->Ref();
-}
-void NodeTd::AsyncUpdateController::Execute() {
-    while (td_manager->responses.empty()) {
-        if (td_manager->HasLeftJavaScript()) {
+        } else if (!arg_0.IsUndefined() && !arg_0.IsNull()) {
+            Napi::TypeError::New(env, "Cannot clone client: client was not an object").ThrowAsJavaScriptException();
             return;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    if (!did_set_client) {
+        tg = new TelegramManager();
+    }
+    try {
+        tg->StartJavaScriptLifetime();
+    } catch (std::exception e) {
+        Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+        return;
     }
 }
-void NodeTd::AsyncUpdateController::OnOK() {
-    Napi::Env env = Env();
-    if (td_manager->HasLeftJavaScript()) {
-        js_manager->Unref();
-    } else {
-        if (!td_manager->responses.empty()) {
-            Napi::HandleScope scope(env);
-            std::uint32_t entry_id = 0;
-            Napi::Array results = Napi::Array::New(env, td_manager->responses.size());
-            Napi::Object js_client = js_manager->Value();
-            js_client.Set("last_receive_result", results);
-            while (!td_manager->responses.empty()) {
-                td::Client::Response response = std::move(td_manager->responses.front());
-
-                ConvertUnknownTelegramToJavaScript(env, response.object, results, Napi::Number::New(env, entry_id));
-                Napi::Value entry = results.Get(entry_id);
-                bool did_promise = false;
-                if (response.id) {
-                    auto it = js_manager->pending_requests.find(response.id);
-                    if (it != js_manager->pending_requests.end()) {
-                        Napi::Promise::Deferred prom = std::move(it->second);
-                        js_manager->pending_requests.erase(it);
-                        did_promise = true;
-                        if (entry.IsObject() && entry.As<const Napi::Object>().Get("@type").As<Napi::String>().Utf8Value() == "error") {
-                            prom.Reject(entry);
-                        } else {
-                            prom.Resolve(entry);
-                        }
-                    }
-                }
-                if (!did_promise) {
-                    js_manager->callback_function.MakeCallback(js_client, { entry, env.Undefined() });
-                }
-
-                td_manager->responses.pop();
-                entry_id++;
+void TdNode::JavaScriptManager::Finalize(Napi::Env env) {
+    tg->EndJavaScriptLifetime();
+}
+Napi::FunctionReference TdNode::JavaScriptManager::constructor;
+void TdNode::JavaScriptManager::tg_send(const Napi::CallbackInfo &info) {
+    if (info.Length() >= 1) {
+        Napi::Object param = info[0].As<Napi::Object>();
+        td::td_api::object_ptr<td::td_api::Function> request;
+        try {
+            request = std::move(ToTelegram::AnyUnknownFunction(param));
+        } catch (std::exception e) {
+            Napi::Error::New(info.Env(), e.what()).ThrowAsJavaScriptException();
+            return;
+        }
+        auto request_id = ++next_request_id;
+        requestid: if (param.Has("@extra")) {
+            Napi::Value reqId = param.Get("@extra");
+            bool may_continue;
+            switch (reqId.Type()) {
+                case napi_valuetype::napi_undefined:
+                case napi_valuetype::napi_null:
+                    may_continue = false;
+                    break;
+                default:
+                    Napi::TypeError::New(info.Env(), "Request ID must be a string, bigint, or number").ThrowAsJavaScriptException();
+                    return;
+                case napi_valuetype::napi_bigint:
+                case napi_valuetype::napi_string:
+                case napi_valuetype::napi_number:
+                    may_continue = true;
+            }
+            if (may_continue) {
+                tg->request_ids.emplace(request_id, std::move(reqId));
             }
         }
-        SuppressDestruct();
-        Queue();
+        tg->send({ request_id, std::move(request) });
+    } else {
+        Napi::RangeError::New(info.Env(), ERROR_REASON_NOT_ENOUGH_ARGUMENTS).ThrowAsJavaScriptException();
     }
 }
-void NodeTd::AsyncUpdateController::OnError(const Napi::Error &e) {
-    Napi::Env env = e.Env();
-    Napi::HandleScope scope(env);
-    js_manager->callback_function.MakeCallback(js_manager->Value(), { env.Undefined(), e.Value() });
+Napi::Value TdNode::JavaScriptManager::tg_receive(const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    Napi::EscapableHandleScope scope(env);
+    double timeout = 60.0;
+    if (info.Length() >= 1) {
+        Napi::Value arg_0 = info[0];
+        if (arg_0.IsNumber()) {
+            timeout = arg_0.As<Napi::Number>().DoubleValue();
+        } else if (ToTelegram::IsNotNullish(arg_0)) {
+            Napi::Promise::Deferred defer = Napi::Promise::Deferred::New(env);
+            defer.Reject(Napi::TypeError::New(env, "Timeout must be a number"));
+            return scope.Escape(defer.Promise());
+        }
+    }
+    td::Client::Response immediate_response = std::move(tg->receive(0.0));
+    if (immediate_response.id || immediate_response.object) {
+        Napi::Promise::Deferred defer = Napi::Promise::Deferred::New(env);
+        defer.Resolve(tg->ConvertResultToJavaScript(env, std::move(immediate_response)));
+        return scope.Escape(defer.Promise());
+    } else {
+        ReceiverAsyncWorker *worker = new ReceiverAsyncWorker(env, tg, timeout);
+        worker->Queue();
+        return scope.Escape(worker->GetPromise());
+    }
 }
+Napi::Value TdNode::JavaScriptManager::execute(const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    Napi::EscapableHandleScope scope(env);
+    if (info.Length() < 1) {
+        Napi::RangeError::New(env, ERROR_REASON_NOT_ENOUGH_ARGUMENTS).ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+    td::td_api::object_ptr<td::td_api::Function> request;
+    try {
+        request = std::move(ToTelegram::AnyUnknownFunction(info[0]));
+    } catch (std::exception e) {
+        Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+    td::Client::Response result = td::Client::execute({ 0, std::move(request) });
+    return scope.Escape(ToJavaScript::AnyUnknownObject(env, std::move(result.object)));
+}
+TdNode::ReceiverAsyncWorker::ReceiverAsyncWorker(Napi::Env env, TelegramManager *client, double timeout) : Napi::AsyncWorker(env), tg(client), js_promise(Napi::Promise::Deferred::New(env)), timeout(timeout) {
+    client->StartWorkerLifetime();
+}
+Napi::Promise TdNode::ReceiverAsyncWorker::GetPromise() {
+    return js_promise.Promise();
+}
+void TdNode::ReceiverAsyncWorker::Execute() {
+    tg_response = std::move(tg->receive(timeout));
+}
+void TdNode::ReceiverAsyncWorker::OnOK() {
+    Napi::Env env = Env();
+    Napi::HandleScope scope(env);
+    Napi::Value result = tg->ConvertResultToJavaScript(env, std::move(tg_response));
+    js_promise.Resolve(result);
+    tg->EndWorkerLifetime();
+}
+
 Napi::Object InitALL(Napi::Env env, Napi::Object exports) {
-    NodeTd::JavaScriptManager::Init(env, exports);
+    TdNode::JavaScriptManager::Init(env, exports);
     return exports;
 }
-#include "node-td-conversions.cpp"
-#include "td-node-conversions.cpp"
 
 NODE_API_MODULE(TdNode, InitALL)

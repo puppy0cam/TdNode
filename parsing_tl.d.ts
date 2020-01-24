@@ -4,6 +4,7 @@ export const TD_API: TD_API = {
     classes: __classes as any,
 };
 export namespace TD_API {
+    export type ParameterType = constructorParamType | classParamType | vectorParamType;
     export interface constructorTypeFunction {
         "@type": "constructorTypeFunction";
         name: string;
@@ -15,7 +16,7 @@ export namespace TD_API {
     export interface parameter {
         "@type": "parameter";
         name: string;
-        type: constructorParamType | classParamType | vectorParamType;
+        type: ParameterType;
         description?: string;
     }
     export interface constructorParamType {
@@ -28,7 +29,7 @@ export namespace TD_API {
     }
     export interface vectorParamType {
         "@type": "vectorParamType";
-        of_type: constructorParamType | classParamType | vectorParamType;
+        of_type: ParameterType;
     }
     export interface constructorTypeObject {
         "@type": "constructorTypeObject";
