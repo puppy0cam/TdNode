@@ -175,7 +175,7 @@ Napi::Value TdNode::JavaScriptManager::tg_receive(const Napi::CallbackInfo &info
             timeout = arg_0.As<Napi::Number>().DoubleValue();
         } else if (ToTelegram::IsNotNullish(arg_0)) {
             Napi::Promise::Deferred defer = Napi::Promise::Deferred::New(env);
-            defer.Reject(Napi::TypeError::New(env, "Timeout must be a number"));
+            defer.Reject(Napi::TypeError::New(env, "Timeout must be a number").Value());
             return scope.Escape(defer.Promise());
         }
     }
