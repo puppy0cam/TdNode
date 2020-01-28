@@ -45,24 +45,11 @@ if (process.platform === "win32") {
     console.log("Initiating the git repo");
     exec("git init");
     try {
-        console.log("Attempting to add td submodule");
-        exec("git submodule add https://github.com/tdlib/td.git");
-        console.log("td submodule obtained");
-    } catch {
-        console.log("td submodule probably already exists, so will try to update it instead");
-        exec("git submodule update --init --remote td");
-        console.log("td submodule updated");
-    }
-    console.log("Checking out master");
-    exec("git checkout master", "./td");
-    console.log("Pulling changes from remote");
-    exec("git pull", "./td");
-    try {
         console.log("Attempting to add vcpkg submodule");
         exec("git submodule add https://github.com/Microsoft/vcpkg.git", "./td");
         console.log("vcpkg submodule obtained");
-    } catch {
-        console.log("vcpkg submodule likely already exists, so will try to update it instead");
+    } catch (e) {
+        console.log("vcpkg submodule likely already exists, so will try to update it instead", e);
         exec("git submodule update --init --remote vcpkg", "./td");
         console.log("vcpkg submodule updated");
     }
