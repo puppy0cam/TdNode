@@ -20,9 +20,9 @@ namespace TdNode {
         constexpr auto &&vector_int64_ = vector_<std::int64_t, &int64_, false>;
         constexpr auto &&vector_vector_int64_ = vector_<std::vector<std::int64_t>, &vector_int64_, false>;
 
-        constexpr auto &&int53_ = int64_;
-        constexpr auto &&vector_int53_ = vector_int64_;
-        constexpr auto &&vector_vector_int53_ = vector_vector_int64_;
+        Napi::Value int53_(Napi::Env env, std::int64_t value);
+        constexpr auto &&vector_int53_ = vector_<std::int64_t, &int53_, false>;
+        constexpr auto &&vector_vector_int53_ = vector_<std::vector<std::int64_t>, &vector_int54_, false>;
 
         Napi::Value int32_(Napi::Env env, std::int32_t value);
         constexpr auto &&vector_int32_ = vector_<std::int32_t, &int32_, false>;
