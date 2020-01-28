@@ -5,12 +5,12 @@ const {
     classes,
 } = require("./td_api.json");
 
-let result = `
-#pragma once
+let result = `\
+#ifndef _TdNode_JS_TO_TD_CODE
+#define _TdNode_JS_TO_TD_CODE
 
+#include "libraries.h"
 #include "js-to-td.h"
-#include <td/telegram/td_api.hpp>
-#include "base64.cpp"
 
 const bool TdNode::ToTelegram::IsNotNullish(const Napi::Value value) {
     return !value.IsNull() && !value.IsUndefined();
@@ -184,6 +184,7 @@ for (const i of constructors) {
 result += `
     throw std::exception("No valid @type for object");
 }
+#endif
 `;
 
 require("fs").writeFileSync("./src/js-to-td.cpp", result);

@@ -11,3 +11,5 @@ td_api.json
 TdNode.d.ts
 index.d.ts
 .vscode
+package-lock.json
+tdlib/

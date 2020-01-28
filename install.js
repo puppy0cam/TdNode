@@ -76,12 +76,10 @@ if (process.platform === "win32") {
     exec("vcpkg.exe install openssl:" + os.arch() + "-windows zlib:" + os.arch() + "-windows", "./td/vcpkg");
     console.log("Deleting last TDLib build");
     del("./td/build");
-    console.log("Deleting last TdNode build");
-    del("./td/example/node");
     console.log("Creating new TDLib build directory");
     fs.mkdirSync("./td/build");
     console.log("Executing cmake preparation");
-    exec("cmake -A " + process.arch + " -DCMAKE_INSTALL_PREFIX:PATH=../tdlib -DCMAKE_TOOLCHAIN_FILE:FILEPATH=../vcpkg/scripts/buildsystems/vcpkg.cmake ..", "./td/build");
+    exec("cmake -A " + process.arch + " -DCMAKE_INSTALL_PREFIX:PATH=../../tdlib -DCMAKE_TOOLCHAIN_FILE:FILEPATH=../vcpkg/scripts/buildsystems/vcpkg.cmake ..", "./td/build");
     console.log("Executing cmake build");
     exec("cmake --build . --target install --config Release", "./td/build");
     console.log("Copying dll files up to module root");
@@ -100,25 +98,13 @@ if (process.platform === "win32") {
     console.log("Saving TypeScript definitions for schema");
     fs.writeFileSync("./index.d.ts", ts_def.result);
     require("./generate_converters.js");
-    console.log("Creating working directory for TdNode build");
-    fs.mkdirSync("./td/example/node");
-    console.log("Copying source files for TdNode build");
-    for (const i of fs.readdirSync("./src")) {
-        console.log("  " + i);
-        fs.copyFileSync("./src/" + i, "./td/example/node/" + i);
-    }
-    console.log("Preparing secondary TDLib build");
-    exec("cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../example/node/td ..", "./td/build");
-    console.log("Doing secondary build");
-    exec("cmake --build . --target install --config Release", "./td/build");
-    console.log("Doing Cmake-js install");
-    exec("cmake-js install", "./td/example/node");
-    console.log("Configuring TdNode");
-    exec("cmake-js configure --CDNODE_ADDON_API_DIR="+ require("node-addon-api").include, "./td/example/node");
+
+    console.log("Configuring TdNode build");
+    exec("cmake-js configure", ".");
     console.log("Building TdNode");
-    exec("cmake-js build", "./td/example/node");
-    console.log("Copying TdNode.node");
-    fs.copyFileSync("./td/example/node/build/Release/TdNode.node", "./TdNode.node");
+    exec("cmake-js build", ".");
+    console.log("Copying build result");
+    fs.copyFileSync("./build/Release/TdNode.node", "./TdNode.node");
 } else {
     throw new Error("Platform does not support an automatic build. You can contribute to the project by creating a set of build instructions for your system and submitting a pull request");
 }

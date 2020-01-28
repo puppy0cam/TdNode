@@ -1,14 +1,10 @@
-#pragma once
+#ifndef TdNode_TdNode_CODE
+#define TdNode_TdNode_CODE
 
-#include <queue>
-#include <map>
-#include <td/telegram/Client.h>
-#include <td/telegram/td_api.h>
-#include <td/telegram/td_api.hpp>
-#include <napi.h>
+#include "libraries.h"
+#include "TdNode.h"
 #include "td-to-js.cpp"
 #include "js-to-td.cpp"
-#include "TdNode.h"
 
 
 TdNode::TelegramManager::TelegramManager() {
@@ -140,13 +136,11 @@ void TdNode::JavaScriptManager::tg_send(const Napi::CallbackInfo &info) {
             return;
         }
         auto request_id = ++next_request_id;
-        requestid: if (param.Has("@extra")) {
+        if (param.Has("@extra")) {
             Napi::Value reqId = param.Get("@extra");
-            bool may_continue;
             switch (reqId.Type()) {
                 case napi_valuetype::napi_undefined:
                 case napi_valuetype::napi_null:
-                    may_continue = false;
                     break;
                 default:
                     Napi::TypeError::New(info.Env(), "Request ID must be a string, bigint, or number").ThrowAsJavaScriptException();
@@ -154,10 +148,7 @@ void TdNode::JavaScriptManager::tg_send(const Napi::CallbackInfo &info) {
                 case napi_valuetype::napi_bigint:
                 case napi_valuetype::napi_string:
                 case napi_valuetype::napi_number:
-                    may_continue = true;
-            }
-            if (may_continue) {
-                tg->request_ids.emplace(request_id, std::move(reqId));
+                    tg->request_ids.emplace(request_id, reqId);
             }
         }
         tg->send({ request_id, std::move(request) });
@@ -230,3 +221,4 @@ Napi::Object InitALL(Napi::Env env, Napi::Object exports) {
 }
 
 NODE_API_MODULE(TdNode, InitALL)
+#endif

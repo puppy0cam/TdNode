@@ -1,13 +1,7 @@
-#pragma once
+#ifndef _TdNode_TdNode_HEADER
+#define _TdNode_TdNode_HEADER
 
-#include <queue>
-#include <map>
-#include <td/telegram/Client.h>
-#include <td/telegram/td_api.h>
-#include <td/telegram/td_api.hpp>
-#include <napi.h>
-#include "td-to-js.h"
-#include "js-to-td.h"
+#include "libraries.h"
 
 namespace TdNode {
     class TelegramManager;
@@ -28,7 +22,7 @@ namespace TdNode {
             void EndJavaScriptLifetime();
             void StartWorkerLifetime();
             void EndWorkerLifetime();
-            std::map<std::uint64_t, Napi::Number> request_ids;
+            std::map<std::uint64_t, Napi::Value> request_ids;
         private:
             td::Client *client = new td::Client();
             bool is_receive_locked = false;
@@ -124,3 +118,6 @@ namespace NodeTd {
     };
 }
 Napi::Object InitALL(Napi::Env env, Napi::Object exports);
+#include "td-to-js.h"
+#include "js-to-td.h"
+#endif

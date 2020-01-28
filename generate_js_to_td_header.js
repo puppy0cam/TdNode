@@ -5,14 +5,11 @@ const {
     classes,
 } = require("./td_api.json");
 
-let result = `
-#pragma once
+let result = `\
+#ifndef _TdNode_JS_TO_TD_HEADER
+#define _TdNode_JS_TO_TD_HEADER
 
-#include <napi.h>
-#include <td/telegram/td_api.h>
-#include <type_traits>
-#include <vector>
-#include "base64.h"
+#include "libraries.h"
 
 namespace TdNode {
     namespace ToTelegram {
@@ -107,6 +104,7 @@ for (const i of classes) {
 result += `
     }
 }
+#endif
 `;
 
 require("fs").writeFileSync("./src/js-to-td.h", result);
