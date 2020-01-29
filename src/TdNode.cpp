@@ -32,14 +32,14 @@ Napi::Value TdNode::TelegramManager::ConvertResultToJavaScript(Napi::Env env, td
     if (tg_response.id) {
         auto it = request_ids.find(tg_response.id);
         if (it != request_ids.end()) {
-            Napi::Value req_info = std::move(it->second);
+            const RequestExtraData req_info = it->second;
             request_ids.erase(it);
             if (result.IsObject()) {
-                result.As<Napi::Object>().Set("@extra", req_info);
+                result.As<Napi::Object>().Set("@extra", req_info.GetValue(env));
             } else {
                 // fallback object if we get null from conversion to allow for @extra
                 Napi::Object fallbackObject = Napi::Object::New(env);
-                fallbackObject.Set("@extra", req_info);
+                fallbackObject.Set("@extra", req_info.GetValue(env));
                 fallbackObject.Set("@helpInfo", Napi::String::New(env, "Normally it should be impossible to get an object like this, however when converting to javascript, we somehow ended up with null. The @extra field has been provided to assist in debugging"));
                 return scope.Escape(fallbackObject);
             }
@@ -148,7 +148,7 @@ void TdNode::JavaScriptManager::tg_send(const Napi::CallbackInfo &info) {
                 case napi_valuetype::napi_bigint:
                 case napi_valuetype::napi_string:
                 case napi_valuetype::napi_number:
-                    tg->request_ids.emplace(request_id, reqId);
+                    tg->request_ids.emplace(request_id, RequestExtraData(reqId));
             }
         }
         tg->send({ request_id, std::move(request) });
@@ -214,7 +214,64 @@ void TdNode::ReceiverAsyncWorker::OnOK() {
     js_promise.Resolve(result);
     tg->EndWorkerLifetime();
 }
-
+TdNode::RequestExtraData::RequestExtraData(const int64_t value) noexcept : type(BigInt), bigint_value(value) {
+}
+TdNode::RequestExtraData::RequestExtraData(const double_t value) noexcept : type(Number), number_value(value) {
+}
+TdNode::RequestExtraData::RequestExtraData(const std::string value) noexcept : type(String), string_value(value) {
+}
+TdNode::RequestExtraData::RequestExtraData(const std::string& value) noexcept : type(String), string_value(value) {
+}
+TdNode::RequestExtraData::RequestExtraData(const char *value) noexcept : type(String), string_value(value) {
+}
+TdNode::RequestExtraData::RequestExtraData(const Napi::Value value) {
+    switch (value.Type()) {
+        case napi_valuetype::napi_bigint:
+            type = BigInt;
+            bigint_value = std::stoll(value.ToString());
+            return;
+        case napi_valuetype::napi_number:
+            type = Number;
+            number_value = value.As<const Napi::Number>().DoubleValue();
+            return;
+        case napi_valuetype::napi_string:
+            type = String;
+            string_value = value.As<const Napi::String>().Utf8Value();
+            return;
+        default:
+            throw std::exception("Invalid request extra data type");
+    }
+}
+TdNode::RequestExtraData::RequestExtraData(const RequestExtraData &value) noexcept {
+    switch (type = value.type) {
+        case BigInt:
+            bigint_value = value.bigint_value;
+            return;
+        case Number:
+            number_value = value.number_value;
+            return;
+        case String:
+            string_value = value.string_value;
+            return;
+    }
+}
+const TdNode::RequestExtraData::ValueType TdNode::RequestExtraData::GetType() const noexcept {
+    return type;
+}
+Napi::Value TdNode::RequestExtraData::GetValue(Napi::Env env) const {
+    switch (type) {
+        case BigInt:
+            return env.Global().Get("BigInt").As<Napi::Function>().Call({ Napi::String::New(env, std::to_string(bigint_value)) });
+        case Number:
+            return Napi::Number::New(env, number_value);
+        case String:
+            return Napi::String::New(env, string_value);
+        default:
+            Napi::Error error = Napi::Error::New(env, "Bad type");
+            error.ThrowAsJavaScriptException();
+            throw error;
+    }
+}
 Napi::Object InitALL(Napi::Env env, Napi::Object exports) {
     TdNode::JavaScriptManager::Init(env, exports);
     return exports;

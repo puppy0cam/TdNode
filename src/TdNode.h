@@ -7,6 +7,7 @@ namespace TdNode {
     class TelegramManager;
     class JavaScriptManager;
     class ReceiverAsyncWorker;
+    class RequestExtraData;
     constexpr const char *ERROR_REASON_RECEIVE_LOCKED = "RECEIVE_LOCKED - This client is already being received from";
     constexpr const char *ERROR_REASON_NOT_ENOUGH_ARGUMENTS = "Not enough arguments";
     class TelegramManager {
@@ -22,7 +23,7 @@ namespace TdNode {
             void EndJavaScriptLifetime();
             void StartWorkerLifetime();
             void EndWorkerLifetime();
-            std::map<std::uint64_t, Napi::Value> request_ids;
+            std::map<std::uint64_t, RequestExtraData> request_ids;
         private:
             td::Client *client = new td::Client();
             bool is_receive_locked = false;
@@ -56,6 +57,24 @@ namespace TdNode {
             td::Client::Response tg_response;
             double timeout;
             Napi::Promise::Deferred js_promise;
+    };
+    class RequestExtraData {
+        public:
+            static enum ValueType { BigInt, Number, String };
+            const ValueType GetType() const noexcept;
+            Napi::Value GetValue(Napi::Env env) const;
+            RequestExtraData(const int64_t value) noexcept;
+            RequestExtraData(const double_t value) noexcept;
+            RequestExtraData(const std::string value) noexcept;
+            RequestExtraData(const std::string& value) noexcept;
+            RequestExtraData(const char *value) noexcept;
+            RequestExtraData(const Napi::Value value);
+            RequestExtraData(const RequestExtraData &value) noexcept;
+        private:
+            int64_t bigint_value;
+            double_t number_value;
+            std::string string_value;
+            ValueType type;
     };
 }
 
