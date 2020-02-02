@@ -62,7 +62,7 @@ namespace TdNode {
         public:
             static enum ValueType { BigInt, Number, String };
             const ValueType GetType() const noexcept;
-            Napi::Value GetValue(Napi::Env env) const;
+            Napi::Value GetValue(Napi::Env env) const noexcept;
             RequestExtraData(const int64_t value) noexcept;
             RequestExtraData(const double_t value) noexcept;
             RequestExtraData(const std::string value) noexcept;
@@ -70,10 +70,12 @@ namespace TdNode {
             RequestExtraData(const char *value) noexcept;
             RequestExtraData(const Napi::Value value);
             RequestExtraData(const RequestExtraData &value) noexcept;
+            RequestExtraData(RequestExtraData &&value) noexcept;
+            RequestExtraData& operator =(const RequestExtraData &value) noexcept;
+            RequestExtraData& operator =(RequestExtraData &&value) noexcept;
+            ~RequestExtraData() noexcept;
         private:
-            int64_t bigint_value;
-            double_t number_value;
-            std::string string_value;
+            const void *value_ptr;
             ValueType type;
     };
 }
