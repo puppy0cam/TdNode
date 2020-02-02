@@ -42,31 +42,16 @@ function exec(command, cwd) {
 console.log("Note: Building can take a LONG time.");
 
 if (process.platform === "win32") {
-    console.log("Initiating the git repo");
-    exec("git init");
-    try {
-        console.log("Attempting to add vcpkg submodule");
-        exec("git submodule add https://github.com/Microsoft/vcpkg.git", "./td");
-        console.log("vcpkg submodule obtained");
-    } catch (e) {
-        console.log("vcpkg submodule likely already exists, so will try to update it instead", e);
-        exec("git submodule update --init --remote vcpkg", "./td");
-        console.log("vcpkg submodule updated");
-    }
-    console.log("Checking out master");
-    exec("git checkout master", "./td/vcpkg");
-    console.log("pulling changes from remote");
-    exec("git pull", "./td/vcpkg");
     console.log("Executing vcpkg bootstrap");
-    exec("bootstrap-vcpkg.bat", "./td/vcpkg");
+    exec("bootstrap-vcpkg.bat", "./vcpkg");
     console.log("Installing vcpkg dependencies");
-    exec("vcpkg.exe install openssl:" + os.arch() + "-windows zlib:" + os.arch() + "-windows", "./td/vcpkg");
+    exec("vcpkg.exe install openssl:" + os.arch() + "-windows zlib:" + os.arch() + "-windows", "./vcpkg");
     console.log("Deleting last TDLib build");
     del("./td/build");
     console.log("Creating new TDLib build directory");
     fs.mkdirSync("./td/build");
     console.log("Executing cmake preparation");
-    exec("cmake -A " + process.arch + " -DCMAKE_INSTALL_PREFIX:PATH=../../tdlib -DCMAKE_TOOLCHAIN_FILE:FILEPATH=../vcpkg/scripts/buildsystems/vcpkg.cmake ..", "./td/build");
+    exec("cmake -A " + process.arch + " -DCMAKE_INSTALL_PREFIX:PATH=../../tdlib -DCMAKE_TOOLCHAIN_FILE:FILEPATH=../../vcpkg/scripts/buildsystems/vcpkg.cmake ..", "./td/build");
     console.log("Executing cmake build");
     exec("cmake --build . --target install --config Release", "./td/build");
     console.log("Copying dll files up to module root");
@@ -93,6 +78,6 @@ if (process.platform === "win32") {
     console.log("Copying build result");
     fs.copyFileSync("./build/Release/TdNode.node", "./TdNode.node");
 } else {
-    throw new Error("Platform does not support an automatic build. You can contribute to the project by creating a set of build instructions for your system and submitting a pull request");
+    throw new Error("Platform does not support an automatic build. You can contribute to the project by creating a set of build instructions for your system and submitting a pull request at https://github.com/puppy0cam/TdNode");
 }
 console.log("Done");
