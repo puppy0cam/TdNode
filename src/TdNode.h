@@ -60,7 +60,7 @@ namespace TdNode {
     };
     class RequestExtraData {
         public:
-            static enum ValueType { BigInt, Number, String };
+            static enum ValueType : uint8_t { BigInt, Number, String };
             const ValueType GetType() const noexcept;
             Napi::Value GetValue(Napi::Env env) const noexcept;
             RequestExtraData(const int64_t value) noexcept;
@@ -79,7 +79,6 @@ namespace TdNode {
             ValueType type;
     };
 }
-
 Napi::Object InitALL(Napi::Env env, Napi::Object exports);
 #include "td-to-js.h"
 #include "js-to-td.h"
