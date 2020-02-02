@@ -10,7 +10,7 @@ execute_process(
 )
 string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
-find_package(Td 1.5.5 REQUIRED)
+find_package(Td 1.6.0 REQUIRED)
 
 include_directories(${CMAKE_JS_INC})
 
