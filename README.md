@@ -46,7 +46,7 @@ While you may reuse an id you used previously, it is not recommended.
 
 Methods that can be executed synchronously may be done with the static `execute` method.
 The `execute` method does not support the `@extra` field.
-If TDLib returns an error, that error will be returned instead of thrown.
+If an error is returned by the static execute method, the value will be thrown as is without being wrapped into an Error object.
 
 Note: Most fields in TDLib are required, and leaving those values null or undefined may lead to unexpected behaviour up to and including a crash
 without `process.on("exit")` listeners being called.

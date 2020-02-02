@@ -196,7 +196,14 @@ Napi::Value TdNode::JavaScriptManager::execute(const Napi::CallbackInfo &info) {
         return env.Undefined();
     }
     td::Client::Response result = td::Client::execute({ 0, std::move(request) });
-    return scope.Escape(ToJavaScript::AnyUnknownObject(env, std::move(result.object)));
+    Napi::Value RESULT = scope.Escape(ToJavaScript::AnyUnknownObject(env, std::move(result.object)));
+    if (RESULT.IsObject() && RESULT.As<const Napi::Object>().Get("@type").As<const Napi::String>().Utf8Value() == "error") {
+        Napi::Error err = Napi::Error(env, RESULT);
+        err.ThrowAsJavaScriptException();
+        return RESULT;
+    } else {
+        return RESULT;
+    }
 }
 TdNode::ReceiverAsyncWorker::ReceiverAsyncWorker(Napi::Env env, TelegramManager *client, double timeout) : Napi::AsyncWorker(env), tg(client), js_promise(Napi::Promise::Deferred::New(env)), timeout(timeout) {
     client->StartWorkerLifetime();
