@@ -1,6 +1,6 @@
 {
   "name": "tdnode",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A native TDLib interface for Node.JS",
   "main": "index.js",
   "scripts": {
