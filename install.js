@@ -80,4 +80,5 @@ if (process.platform === "win32") {
 } else {
     throw new Error("Platform does not support an automatic build. You can contribute to the project by creating a set of build instructions for your system and submitting a pull request at https://github.com/puppy0cam/TdNode");
 }
-console.log("Done");
+console.log("Done. Now running tests.");
+require("./tests.js");
