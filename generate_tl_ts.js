@@ -29,6 +29,9 @@ function createStarComment(description) {
     }
 }
 let result = `\
+// tslint:disable:class-name
+// tslint:disable:interface-name
+// tslint:disable:max-line-length
 //#region primitives
 export type Bool = boolean;
 export type boolTrue = true;
