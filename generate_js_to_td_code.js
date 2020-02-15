@@ -78,13 +78,13 @@ TdNode::ToTelegram::bytes_t TdNode::ToTelegram::bytes_(const Napi::Value value) 
     if (value.IsBuffer()) {
         const Napi::Buffer<const unsigned char> data = value.As<const Napi::Buffer<const unsigned char>>();
         const unsigned char *bytes = data.Data();
-        return base64_encode(bytes, data.Length());
+        return base64_encode(bytes, (unsigned int) data.Length());
     } else if (value.IsTypedArray()) {
         Napi::ArrayBuffer data = value.As<const Napi::TypedArray>().ArrayBuffer();
-        return base64_encode((const unsigned char *) data.Data(), data.ByteLength());
+        return base64_encode((const unsigned char *) data.Data(), (unsigned int) data.ByteLength());
     } else if (value.IsArrayBuffer()) {
         Napi::ArrayBuffer data = value.As<Napi::ArrayBuffer>();
-        return base64_encode((const unsigned char *)data.Data(), data.ByteLength());
+        return base64_encode((const unsigned char *)data.Data(), (unsigned int) data.ByteLength());
     } else {
         return value.As<Napi::String>().Utf8Value();
     }
@@ -93,9 +93,9 @@ template<auto (*Callback)(Napi::Value)>
 TdNode::ToTelegram::vector_t<std::invoke_result_t<decltype(Callback), const Napi::Value>>
 TdNode::ToTelegram::vector_(Napi::Value value) {
     const Napi::Array array = value.As<const Napi::Array>();
-    const auto size = array.Length();
+    const uint32_t size = array.Length();
     vector_t<std::invoke_result_t<decltype(Callback), const Napi::Value>> result(size);
-    for (auto i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         result[i] = std::move(Callback(array[i]));
     }
     return result;
