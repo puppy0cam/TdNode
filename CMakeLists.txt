@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
-project(TdNode VERSION 1.0.1 LANGUAGES CXX)
+project(TdNode VERSION 1.0.2 LANGUAGES CXX)
 
 set(Td_DIR "tdlib/lib/cmake/Td")
 execute_process(
