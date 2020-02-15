@@ -7,9 +7,10 @@ function del(path) {
     let info;
     try {
         info = fs.statSync(path);
-    } catch {
+    } catch (e) {
         console.log("Failed to get info for " + path);
         console.log("Will assume it just does not exist");
+        console.log(e);
         return;
     }
     if (info.isDirectory()) {
