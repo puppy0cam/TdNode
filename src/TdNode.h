@@ -60,7 +60,7 @@ namespace TdNode {
     };
     class RequestExtraData {
         public:
-            static enum ValueType : uint8_t { BigInt, Number, String };
+            enum ValueType : uint8_t { BigInt, Number, String };
             const ValueType GetType() const noexcept;
             Napi::Value GetValue(Napi::Env env) const noexcept;
             RequestExtraData(const int64_t value) noexcept;

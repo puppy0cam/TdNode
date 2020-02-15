@@ -246,7 +246,11 @@ TdNode::RequestExtraData::RequestExtraData(const Napi::Value value) {
             value_ptr = new std::string(value.As<const Napi::String>().Utf8Value());
             return;
         default:
-            throw std::exception("Invalid request extra data type");
+            std::cout << std::endl
+                      << "Invalid code point, a crash may be inbound" << std::endl
+                      << "File: " << __FILE__ << std::endl
+                      << "Function: " << __func__ << std::endl;
+            return;
     }
 }
 TdNode::RequestExtraData::RequestExtraData(const RequestExtraData &value) noexcept {
@@ -259,6 +263,12 @@ TdNode::RequestExtraData::RequestExtraData(const RequestExtraData &value) noexce
             return;
         case String:
             value_ptr = new std::string(*(std::string *)value.value_ptr);
+            return;
+        default:
+            std::cout << std::endl
+                      << "Invalid code point, a crash may be inbound" << std::endl
+                      << "File: " << __FILE__ << std::endl
+                      << "Function: " << __func__ << std::endl;
             return;
     }
 }
@@ -273,6 +283,12 @@ Napi::Value TdNode::RequestExtraData::GetValue(Napi::Env env) const noexcept {
             return Napi::Number::New(env, *(double_t *) value_ptr);
         case String:
             return Napi::String::New(env, *(std::string *) value_ptr);
+        default:
+            std::cout << std::endl
+                      << "Invalid code point, a crash may be inbound" << std::endl
+                      << "File: " << __FILE__ << std::endl
+                      << "Function: " << __func__ << std::endl;
+            return env.Null();
     }
 }
 TdNode::RequestExtraData::~RequestExtraData() noexcept {
@@ -286,6 +302,12 @@ TdNode::RequestExtraData::~RequestExtraData() noexcept {
             return;
         case String:
             delete (std::string *) value_ptr;
+            return;
+        default:
+            std::cout << std::endl
+                      << "Invalid code point, a crash may be inbound" << std::endl
+                      << "File: " << __FILE__ << std::endl
+                      << "Function: " << __func__ << std::endl;
             return;
     }
 }
@@ -302,6 +324,12 @@ TdNode::RequestExtraData& TdNode::RequestExtraData::operator =(const RequestExtr
             return *this;
         case String:
             value_ptr = new std::string(*(std::string *)value.value_ptr);
+            return *this;
+        default:
+            std::cout << std::endl
+                      << "Invalid code point, a crash may be inbound" << std::endl
+                      << "File: " << __FILE__ << std::endl
+                      << "Function: " << __func__ << std::endl;
             return *this;
     }
 }
