@@ -2,6 +2,7 @@ const execSync = require("child_process").execSync;
 const fs = require("fs");
 const os = require("os");
 const _path = require("path");
+const process = require("process");
 function del(path) {
     let info;
     try {
@@ -42,6 +43,9 @@ function exec(command, cwd) {
 console.log("Note: Building can take a LONG time.");
 
 if (process.platform === "win32") {
+    if (!process.env.VCPKG_DOWNLOADS) {
+        console.warn("Note: If installing this module to multiple places in the system, it is recommended that you set the VCPKG_DOWNLOADS environment variable to a dedicated folder. Doing so can reduce future build times significantly.");
+    }
     console.log("Executing vcpkg bootstrap");
     exec("bootstrap-vcpkg.bat", "./vcpkg");
     console.log("Installing vcpkg dependencies");
