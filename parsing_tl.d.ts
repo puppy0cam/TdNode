@@ -1,3 +1,5 @@
+// tslint:disable:class-name
+// tslint:disable:interface-name
 export const TD_API: TD_API = {
     functions: __functions,
     constructors: __constructors,
