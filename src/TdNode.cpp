@@ -32,7 +32,7 @@ Napi::Value TdNode::TelegramManager::ConvertResultToJavaScript(Napi::Env env, td
     if (tg_response.id) {
         auto it = request_ids.find(tg_response.id);
         if (it != request_ids.end()) {
-            const RequestExtraData req_info = it->second;
+            const RequestExtraData req_info = std::move(it->second);
             request_ids.erase(it);
             if (result.IsObject()) {
                 result.As<Napi::Object>().Set("@extra", req_info.GetValue(env));
@@ -145,6 +145,7 @@ void TdNode::JavaScriptManager::tg_send(const Napi::CallbackInfo &info) {
                 default:
                     Napi::TypeError::New(info.Env(), "Request ID must be a string, bigint, or number").ThrowAsJavaScriptException();
                     return;
+                case napi_valuetype::napi_object:
                 case napi_valuetype::napi_bigint:
                 case napi_valuetype::napi_string:
                 case napi_valuetype::napi_number:
@@ -245,6 +246,10 @@ TdNode::RequestExtraData::RequestExtraData(const Napi::Value value) {
             type = String;
             value_ptr = new std::string(value.As<const Napi::String>().Utf8Value());
             return;
+        case napi_valuetype::napi_object:
+            type = Object;
+            value_ptr = new Napi::ObjectReference(Napi::Persistent(value.As<Napi::Object>()));
+            return;
         default:
             std::cout << std::endl
                       << "Invalid code point, a crash may be inbound" << std::endl
@@ -263,6 +268,13 @@ TdNode::RequestExtraData::RequestExtraData(const RequestExtraData &value) noexce
             return;
         case String:
             value_ptr = new std::string(*(std::string *)value.value_ptr);
+            return;
+        case Object:
+            value_ptr = value.value_ptr;
+            std::cout << std::endl
+                      << "Cannot clone an ObjectReference, a crash or memory leak may be inbound" << std::endl
+                      << "File: " << __FILE__ << std::endl
+                      << "Function: " << __func__ << std::endl;
             return;
         default:
             std::cout << std::endl
@@ -283,6 +295,15 @@ Napi::Value TdNode::RequestExtraData::GetValue(Napi::Env env) const noexcept {
             return Napi::Number::New(env, *(double_t *) value_ptr);
         case String:
             return Napi::String::New(env, *(std::string *) value_ptr);
+        case Object:
+            {
+                const Napi::ObjectReference& value = *(const Napi::ObjectReference *)value_ptr;
+                if (value.IsEmpty()) {
+                    return env.Null();
+                } else {
+                    return value.Value();
+                }
+            }
         default:
             std::cout << std::endl
                       << "Invalid code point, a crash may be inbound" << std::endl
@@ -303,6 +324,14 @@ TdNode::RequestExtraData::~RequestExtraData() noexcept {
         case String:
             delete (std::string *) value_ptr;
             return;
+        case Object:
+            {
+                Napi::ObjectReference &ref = *(Napi::ObjectReference *)value_ptr;
+                if (ref.Unref() == 0) {
+                    delete value_ptr;
+                }
+                break;
+            }
         default:
             std::cout << std::endl
                       << "Invalid code point, a crash may be inbound" << std::endl
@@ -324,6 +353,13 @@ TdNode::RequestExtraData& TdNode::RequestExtraData::operator =(const RequestExtr
             return *this;
         case String:
             value_ptr = new std::string(*(std::string *)value.value_ptr);
+            return *this;
+        case Object:
+            value_ptr = value.value_ptr;
+            std::cout << std::endl
+                      << "Cannot clone an ObjectReference, a crash or memory leak may be inbound" << std::endl
+                      << "File: " << __FILE__ << std::endl
+                      << "Function: " << __func__ << std::endl;
             return *this;
         default:
             std::cout << std::endl

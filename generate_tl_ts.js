@@ -57,7 +57,7 @@ for (const i of constructors) {
     }
     result += `export interface ${i.name} {
     "@type": "${i.name}";
-    "@extra"?: any;`;
+    "@extra"?: undefined | bigint | number | string | object;`;
     for (const param of i.parameters) {
         if (param.description) {
             result += `

@@ -41,8 +41,49 @@ async function loop(client, timeout) {
 ## Sending
 
 The `send` method takes a single required parameter containing the request to send to TDLib.
-You may optionally supply an `@extra` field in the request in the form of a string, number, or bigint.
+You may optionally supply an `@extra` field in the request in the form of an object, string, number, or bigint.
+null and undefined is ignored.
+Other data types are not accepted.
 While you may reuse an id you used previously, it is not recommended.
+
+Using an object as an `@extra` could allow you to do promise chaining by having the receiver resolve/reject a promise:
+```JavaScript
+const client = new TdNode;
+function request(data) {
+    return new Promise((resolve, reject) => {
+        data["@extra"] = [resolve, reject];
+        client.send(data);
+    });
+}
+async function doReceive() {
+    while (true) {
+        const data = await client.receive(60);
+        if (data) {
+            const extraData = data["@extra"];
+            if (Array.isArray(extraData) && extraData.length === 2 && typeof extraData[0] === "function" && typeof extraData[1] === "function") {
+                if (data["@type"] === "error") {
+                    extraData[1](data);
+                } else {
+                    extraData[0](data);
+                }
+            } else if (extraData) {
+                // legacy @extra handling
+            } else {
+                // Just a regular update, or lacking @extra data
+            }
+        }
+    }
+}
+doReceive();
+async function main() {
+    const { updates } = await request({
+        "@type": "getCurrentState",
+    });
+    // do something with the updates
+    console.log(updates);
+}
+main();
+```
 
 Methods that can be executed synchronously may be done with the static `execute` method.
 The `execute` method does not support the `@extra` field.
