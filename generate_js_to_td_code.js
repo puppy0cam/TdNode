@@ -30,7 +30,7 @@ TdNode::ToTelegram::int64_t TdNode::ToTelegram::int64_(const Napi::Value value) 
         case napi_valuetype::napi_string:
             return std::stoll(value.As<const Napi::String>());
         default:
-            throw std::exception("Cannot coerce JS value of such type to int64");
+            throw std::runtime_error("Cannot coerce JS value of such type to int64");
     }
 }
 TdNode::ToTelegram::int53_t TdNode::ToTelegram::int53_(const Napi::Value value) {
@@ -42,7 +42,7 @@ TdNode::ToTelegram::int53_t TdNode::ToTelegram::int53_(const Napi::Value value) 
         case napi_valuetype::napi_string:
             return std::stoll(value.As<const Napi::String>());
         default:
-            throw std::exception("Cannot coerce JS value of such type to int53");
+            throw std::runtime_error("Cannot coerce JS value of such type to int53");
     }
 }
 TdNode::ToTelegram::int32_t TdNode::ToTelegram::int32_(const Napi::Value value) {
@@ -54,21 +54,21 @@ TdNode::ToTelegram::int32_t TdNode::ToTelegram::int32_(const Napi::Value value) 
         case napi_valuetype::napi_string:
             return std::stoi(value.As<const Napi::String>());
         default:
-            throw std::exception("Cannot coerce JS value of such type to int32");
+            throw std::runtime_error("Cannot coerce JS value of such type to int32");
     }
 }
 TdNode::ToTelegram::boolFalse_t TdNode::ToTelegram::boolFalse_(const Napi::Value value) {
     if (value.As<const Napi::Boolean>().Value() == boolFalse) {
         return boolFalse;
     } else {
-        throw std::exception("Value is not false");
+        throw std::runtime_error("Value is not false");
     }
 }
 TdNode::ToTelegram::boolTrue_t TdNode::ToTelegram::boolTrue_(const Napi::Value value) {
     if (value.As<const Napi::Boolean>().Value() == boolTrue) {
         return boolTrue;
     } else {
-        throw std::exception("Value is not true");
+        throw std::runtime_error("Value is not true");
     }
 }
 TdNode::ToTelegram::Bool_t TdNode::ToTelegram::Bool_(const Napi::Value value) {
@@ -158,7 +158,7 @@ td::td_api::object_ptr<TdNode::ToTelegram::${i.name}_t> TdNode::ToTelegram::${i.
     }`
     }
     result += `
-    throw std::exception("Invalid @type for ${i.name}");
+    throw std::runtime_error("Invalid @type for ${i.name}");
 }`
 }
 result += `
@@ -171,7 +171,7 @@ for (const i of functions) {
     }`
 }
 result += `
-    throw std::exception("No valid @type for function");
+    throw std::runtime_error("No valid @type for function");
 }
 td::td_api::object_ptr<td::td_api::Object> TdNode::ToTelegram::AnyUnknownObject(const Napi::Value value) {
     const std::string type = value.As<const Napi::Object>().Get("@type").As<const Napi::String>().Utf8Value();`;
@@ -182,7 +182,7 @@ for (const i of constructors) {
     }`
 }
 result += `
-    throw std::exception("No valid @type for object");
+    throw std::runtime_error("No valid @type for object");
 }
 #endif
 `;

@@ -36,7 +36,7 @@ Napi::Value TdNode::ToJavaScript::int53_(Napi::Env env, std::int64_t value) {
 Napi::Value TdNode::ToJavaScript::int32_(Napi::Env env, std::int32_t value) {
     return Napi::Number::New(env, value);
 }
-Napi::Value TdNode::ToJavaScript::double_(Napi::Env env, std::double_t value) {
+Napi::Value TdNode::ToJavaScript::double_(Napi::Env env, double value) {
     return Napi::Number::New(env, value);
 }
 Napi::Value TdNode::ToJavaScript::string_(Napi::Env env, std::string value) {
@@ -140,7 +140,7 @@ Napi::Value TdNode::ToJavaScript::${i.name}_(Napi::Env env, td::td_api::object_p
     }
     switch (value->get_id()) {
         default:
-            throw std::exception("Invalid type for ${i.name}");`;
+            throw std::runtime_error("Invalid type for ${i.name}");`;
     for (const j of i.constructors) {
         result += `
         case td::td_api::${j}::ID:
@@ -158,7 +158,7 @@ Napi::Value TdNode::ToJavaScript::AnyUnknownObject(Napi::Env env, td::td_api::ob
     }
     switch (value->get_id()) {
         default:
-            throw std::exception("Could not get a valid type for unknown object");`;
+            throw std::runtime_error("Could not get a valid type for unknown object");`;
 for (const i of constructors) {
     result += `
         case td::td_api::${i.name}::ID:
@@ -173,7 +173,7 @@ Napi::Value TdNode::ToJavaScript::AnyUnknownObject(Napi::Env env, td::td_api::ob
     }
     switch (value->get_id()) {
         default:
-            throw std::exception("Could not get a valid type for unknown function");`;
+            throw std::runtime_error("Could not get a valid type for unknown function");`;
 
 for (const i of functions) {
     result += `

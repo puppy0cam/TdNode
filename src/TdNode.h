@@ -27,8 +27,8 @@ namespace TdNode {
         private:
             td::Client *client = new td::Client();
             bool is_receive_locked = false;
-            uint8_t js_alive = true;
-            uint8_t worker_alive = false;
+            std::uint8_t js_alive = true;
+            std::uint8_t worker_alive = false;
     };
     class JavaScriptManager : public Napi::ObjectWrap<JavaScriptManager> {
         public:
@@ -60,11 +60,11 @@ namespace TdNode {
     };
     class RequestExtraData {
         public:
-            enum ValueType : uint8_t { BigInt, Number, String, Object };
+            enum ValueType : std::uint8_t { BigInt, Number, String, Object };
             const ValueType GetType() const noexcept;
             Napi::Value GetValue(Napi::Env env) const noexcept;
-            RequestExtraData(const int64_t value) noexcept;
-            RequestExtraData(const double_t value) noexcept;
+            RequestExtraData(const std::int64_t value) noexcept;
+            RequestExtraData(const double value) noexcept;
             RequestExtraData(const std::string value) noexcept;
             RequestExtraData(const std::string& value) noexcept;
             RequestExtraData(const char *value) noexcept;

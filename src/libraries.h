@@ -11,4 +11,5 @@
 #include <queue>
 #include <map>
 #include <td/telegram/Client.h>
+#include <thread>
 #endif

@@ -28,9 +28,9 @@ namespace TdNode {
         constexpr auto &&vector_int32_ = vector_<std::int32_t, &int32_, false>;
         constexpr auto &&vector_vector_int32_ = vector_<std::vector<std::int32_t>, &vector_int32_, false>;
 
-        Napi::Value double_(Napi::Env env, std::double_t value);
-        constexpr auto &&vector_double_ = vector_<std::double_t, &double_, false>;
-        constexpr auto &&vector_vector_double_ = vector_<std::vector<std::double_t>, &vector_double_, false>;
+        Napi::Value double_(Napi::Env env, double value);
+        constexpr auto &&vector_double_ = vector_<double, &double_, false>;
+        constexpr auto &&vector_vector_double_ = vector_<std::vector<double>, &vector_double_, false>;
 
         Napi::Value string_(Napi::Env env, std::string value);
         constexpr auto &&vector_string_ = vector_<std::string, &string_, false>;

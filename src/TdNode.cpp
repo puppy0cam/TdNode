@@ -50,25 +50,25 @@ Napi::Value TdNode::TelegramManager::ConvertResultToJavaScript(Napi::Env env, td
 void TdNode::TelegramManager::StartJavaScriptLifetime() {
     if (++js_alive == 0) {
         js_alive = 0b11111111;
-        throw std::exception("JavaScript lifetimes exceeds uint8 limit");
+        throw std::runtime_error("JavaScript lifetimes exceeds uint8 limit");
     }
 }
 void TdNode::TelegramManager::EndJavaScriptLifetime() {
     if (--js_alive == 0b11111111) {
         js_alive = 0;
-        throw std::exception("JavaScript lifetimes went below 0");
+        throw std::runtime_error("JavaScript lifetimes went below 0");
     }
 }
 void TdNode::TelegramManager::StartWorkerLifetime() {
     if (++worker_alive == 0) {
         worker_alive = 0b11111111;
-        throw std::exception("Worker lifetimes exceeds uint8 limit");
+        throw std::runtime_error("Worker lifetimes exceeds uint8 limit");
     }
 }
 void TdNode::TelegramManager::EndWorkerLifetime() {
     if (--worker_alive == 0b11111111) {
         worker_alive = 0;
-        throw std::exception("Worker lifetimes went below 0");
+        throw std::runtime_error("Worker lifetimes went below 0");
     }
 }
 Napi::Object TdNode::JavaScriptManager::Init(Napi::Env env, Napi::Object exports) {
@@ -116,7 +116,7 @@ TdNode::JavaScriptManager::JavaScriptManager(const Napi::CallbackInfo &info) : N
     }
     try {
         tg->StartJavaScriptLifetime();
-    } catch (std::exception e) {
+    } catch (std::runtime_error e) {
         Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
         return;
     }
@@ -131,7 +131,7 @@ void TdNode::JavaScriptManager::tg_send(const Napi::CallbackInfo &info) {
         td::td_api::object_ptr<td::td_api::Function> request;
         try {
             request = std::move(ToTelegram::AnyUnknownFunction(param));
-        } catch (std::exception e) {
+        } catch (std::runtime_error e) {
             Napi::Error::New(info.Env(), e.what()).ThrowAsJavaScriptException();
             return;
         }
@@ -192,7 +192,7 @@ Napi::Value TdNode::JavaScriptManager::execute(const Napi::CallbackInfo &info) {
     td::td_api::object_ptr<td::td_api::Function> request;
     try {
         request = std::move(ToTelegram::AnyUnknownFunction(info[0]));
-    } catch (std::exception e) {
+    } catch (std::runtime_error e) {
         Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
         return env.Undefined();
     }
@@ -222,9 +222,9 @@ void TdNode::ReceiverAsyncWorker::OnOK() {
     js_promise.Resolve(result);
     tg->EndWorkerLifetime();
 }
-TdNode::RequestExtraData::RequestExtraData(const int64_t value) noexcept : type(BigInt), value_ptr(new int64_t(value)) {
+TdNode::RequestExtraData::RequestExtraData(const std::int64_t value) noexcept : type(BigInt), value_ptr(new std::int64_t(value)) {
 }
-TdNode::RequestExtraData::RequestExtraData(const double_t value) noexcept : type(Number), value_ptr(new double_t(value)) {
+TdNode::RequestExtraData::RequestExtraData(const double value) noexcept : type(Number), value_ptr(new double(value)) {
 }
 TdNode::RequestExtraData::RequestExtraData(const std::string value) noexcept : type(String), value_ptr(new std::string(value)) {
 }
@@ -236,11 +236,11 @@ TdNode::RequestExtraData::RequestExtraData(const Napi::Value value) {
     switch (value.Type()) {
         case napi_valuetype::napi_bigint:
             type = BigInt;
-            value_ptr = new int64_t(std::stoll(value.ToString()));
+            value_ptr = new std::int64_t(std::stoll(value.ToString()));
             return;
         case napi_valuetype::napi_number:
             type = Number;
-            value_ptr = new double_t(value.As<const Napi::Number>().DoubleValue());
+            value_ptr = new double(value.As<const Napi::Number>().DoubleValue());
             return;
         case napi_valuetype::napi_string:
             type = String;
@@ -261,10 +261,10 @@ TdNode::RequestExtraData::RequestExtraData(const Napi::Value value) {
 TdNode::RequestExtraData::RequestExtraData(const RequestExtraData &value) noexcept {
     switch (type = value.type) {
         case BigInt:
-            value_ptr = new int64_t(*(int64_t *)value.value_ptr);
+            value_ptr = new std::int64_t(*(std::int64_t *)value.value_ptr);
             return;
         case Number:
-            value_ptr = new double_t(*(double_t *)value.value_ptr);
+            value_ptr = new double(*(double *)value.value_ptr);
             return;
         case String:
             value_ptr = new std::string(*(std::string *)value.value_ptr);
@@ -290,9 +290,9 @@ const TdNode::RequestExtraData::ValueType TdNode::RequestExtraData::GetType() co
 Napi::Value TdNode::RequestExtraData::GetValue(Napi::Env env) const noexcept {
     switch (type) {
         case BigInt:
-            return env.Global().Get("BigInt").As<Napi::Function>().Call({ Napi::String::New(env, std::to_string(*(int64_t *) value_ptr)) });
+            return env.Global().Get("BigInt").As<Napi::Function>().Call({ Napi::String::New(env, std::to_string(*(std::int64_t *) value_ptr)) });
         case Number:
-            return Napi::Number::New(env, *(double_t *) value_ptr);
+            return Napi::Number::New(env, *(double *) value_ptr);
         case String:
             return Napi::String::New(env, *(std::string *) value_ptr);
         case Object:
@@ -316,10 +316,10 @@ TdNode::RequestExtraData::~RequestExtraData() noexcept {
     if (value_ptr == nullptr) return;
     switch (type) {
         case BigInt:
-            delete (int64_t *) value_ptr;
+            delete (std::int64_t *) value_ptr;
             return;
         case Number:
-            delete (double_t *) value_ptr;
+            delete (double *) value_ptr;
             return;
         case String:
             delete (std::string *) value_ptr;
@@ -328,7 +328,7 @@ TdNode::RequestExtraData::~RequestExtraData() noexcept {
             {
                 Napi::ObjectReference &ref = *(Napi::ObjectReference *)value_ptr;
                 if (ref.Unref() == 0) {
-                    delete value_ptr;
+                    delete (Napi::ObjectReference *) value_ptr;
                 }
                 break;
             }
@@ -346,10 +346,10 @@ TdNode::RequestExtraData::RequestExtraData(RequestExtraData &&value) noexcept : 
 TdNode::RequestExtraData& TdNode::RequestExtraData::operator =(const RequestExtraData &value) noexcept {
     switch (type = value.type) {
         case BigInt:
-            value_ptr = new int64_t(*(int64_t *)value.value_ptr);
+            value_ptr = new std::int64_t(*(std::int64_t *)value.value_ptr);
             return *this;
         case Number:
-            value_ptr = new double_t(*(double_t *)value.value_ptr);
+            value_ptr = new double(*(double *)value.value_ptr);
             return *this;
         case String:
             value_ptr = new std::string(*(std::string *)value.value_ptr);
