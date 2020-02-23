@@ -41,7 +41,12 @@ function exec(command, cwd) {
         cwd,
     });
 }
+console.log("It is recommended to install the package globally and then use:");
+console.log("npm link TdNode");
+console.log("locally. Doing so could give a boost to startup time");
+console.log();
 console.log("Note: Building can take a LONG time.");
+console.log();
 
 if (process.platform === "win32") {
     if (!process.env.VCPKG_DOWNLOADS) {
