@@ -82,6 +82,32 @@ if (process.platform === "win32") {
     exec("cmake-js build", ".");
     console.log("Copying build result");
     fs.copyFileSync("./build/Release/TdNode.node", "./TdNode.node");
+} else if (process.platform === "linux") {
+    console.log("It is assumed that you have all TDLib dependencies already installed");
+    console.log("Deleting last TDLib build");
+    del("./td/build");
+    console.log("Creating new TDLib build directory");
+    fs.mkdirSync("./td/build");
+    process.env.CXXFLAGS = "";
+    console.log("Configuring TDLib build");
+    exec("cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../../tdlib -DTD_ENABLE_LTO=ON ..", "./td/build");
+    console.log("Building TDLib");
+    exec("cmake --build . --target install --config Release", "./td/build");
+    console.log("Parsing the schema");
+    const schema = require("./parsing_tl.js");
+    console.log("Saving JSON schema to td_api.json");
+    fs.writeFileSync("./td_api.json", JSON.stringify(schema.TD_API));
+    console.log("Generating TypeScript definitions for schema");
+    const ts_def = require("./generate_tl_ts.js");
+    console.log("Saving TypeScript definitions for schema");
+    fs.writeFileSync("./index.d.ts", ts_def.result);
+    require("./generate_converters.js");
+    console.log("Configuring TdNode build");
+    exec("cmake-js configure", ".");
+    console.log("Building TdNode");
+    exec("cmake-js build", ".");
+    console.log("Copying build result");
+    fs.copyFileSync("./build/Release/TdNode.node", "./TdNode.node");
 } else {
     throw new Error("Platform does not support an automatic build. You can contribute to the project by creating a set of build instructions for your system and submitting a pull request at https://github.com/puppy0cam/TdNode");
 }
