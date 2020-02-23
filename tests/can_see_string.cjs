@@ -1,5 +1,5 @@
 "use strict";
-const { TdNode } = require("./");
+const { TdNode } = require("./index.cjs");
 const client = new TdNode;
 (async () => {
     "use strict";

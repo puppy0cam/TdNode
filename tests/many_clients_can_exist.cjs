@@ -1,4 +1,4 @@
 "use strict";
-const { TdNode } = require("./");
+const { TdNode } = require("./index.cjs");
 const client1 = new TdNode;
 const client2 = new TdNode;

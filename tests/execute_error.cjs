@@ -1,4 +1,4 @@
-const { TdNode } = require("..");
+const { TdNode } = require("./index.cjs");
 try {
     const result = TdNode.execute({
         "@type": "testReturnError",

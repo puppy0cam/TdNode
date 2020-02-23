@@ -13,7 +13,7 @@ function runTestsInDirectory(path) {
         if (dirent.isDirectory()) {
             runTestsInDirectory(PATH.join(path, dirent.name));
         } else if (dirent.isFile()) {
-            if (dirent.name === "index.js") continue;
+            if (dirent.name === "index.cjs") continue;
             console.group(PATH.join(path, dirent.name));
             runTestOnFile(path, dirent.name);
             console.groupEnd(PATH.join(path, dirent.name));

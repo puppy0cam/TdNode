@@ -2,15 +2,21 @@
   "name": "tdnode",
   "version": "1.0.4",
   "description": "A native TDLib interface for Node.JS",
-  "main": "index.js",
+  "main": "./index.cjs",
+  "module": "./index.mjs",
   "scripts": {
-    "install": "node install.js"
+    "install": "node install.cjs",
+    "test": "node tests.cjs"
   },
   "author": "puppy0cam",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "cmake-js": "^6.0.0",
     "node-addon-api": "^2.0.0"
+  },
+  "exports": {
+    "require": "./index.cjs",
+    "import": "./index.mjs"
   }
 }

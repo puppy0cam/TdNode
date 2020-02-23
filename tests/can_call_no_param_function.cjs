@@ -1,12 +1,9 @@
 "use strict";
-const { TdNode } = require("./");
+const { TdNode } = require("./index.cjs");
 const client = new TdNode;
 (async () => {
     "use strict";
     while (true) {
-        if (Date.now() - start > 30) {
-            throw "Timed out";
-        }
         const data = await client.receive(1);
         if (!data) continue;
         if (data["@extra"] === 1) {
@@ -16,12 +13,8 @@ const client = new TdNode;
             return;
         }
     }
-})().catch(reason => {
-    "use strict";
-    throw reason;
-});
-const start = Date.now();
+})();
 client.send({
-    "@type": "testNetwork",
+    "@type": "testCallEmpty",
     "@extra": 1,
 });

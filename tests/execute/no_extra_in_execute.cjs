@@ -1,4 +1,4 @@
-const { TdNode } = require("../..");
+const { TdNode } = require("./index.cjs");
 
 const result = TdNode.execute({
     "@type": "setLogVerbosityLevel",

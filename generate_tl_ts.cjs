@@ -5,7 +5,7 @@ const {
         constructors,
         classes,
     },
-} = require("./parsing_tl.js");
+} = require("./parsing_tl.cjs");
 function handleParamTypeDefinition(type) {
     "use strict";
     if (type["@type"] === "constructorParamType") {

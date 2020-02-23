@@ -72,14 +72,14 @@ if (process.platform === "win32") {
         }
     }
     console.log("Parsing the schema");
-    const schema = require("./parsing_tl.js");
+    const schema = require("./parsing_tl.cjs");
     console.log("Saving JSON schema to td_api.json");
     fs.writeFileSync("./td_api.json", JSON.stringify(schema.TD_API));
     console.log("Generating TypeScript definitions for schema");
-    const ts_def = require("./generate_tl_ts.js");
+    const ts_def = require("./generate_tl_ts.cjs");
     console.log("Saving TypeScript definitions for schema");
     fs.writeFileSync("./index.d.ts", ts_def.result);
-    require("./generate_converters.js");
+    require("./generate_converters.cjs");
 
     console.log("Configuring TdNode build");
     exec("cmake-js configure", ".");
@@ -99,14 +99,14 @@ if (process.platform === "win32") {
     console.log("Building TDLib");
     exec("cmake --build . --target install --config Release", "./td/build");
     console.log("Parsing the schema");
-    const schema = require("./parsing_tl.js");
+    const schema = require("./parsing_tl.cjs");
     console.log("Saving JSON schema to td_api.json");
     fs.writeFileSync("./td_api.json", JSON.stringify(schema.TD_API));
     console.log("Generating TypeScript definitions for schema");
-    const ts_def = require("./generate_tl_ts.js");
+    const ts_def = require("./generate_tl_ts.cjs");
     console.log("Saving TypeScript definitions for schema");
     fs.writeFileSync("./index.d.ts", ts_def.result);
-    require("./generate_converters.js");
+    require("./generate_converters.cjs");
     console.log("Configuring TdNode build");
     exec("cmake-js configure", ".");
     console.log("Building TdNode");
@@ -117,4 +117,4 @@ if (process.platform === "win32") {
     throw new Error("Platform does not support an automatic build. You can contribute to the project by creating a set of build instructions for your system and submitting a pull request at https://github.com/puppy0cam/TdNode");
 }
 console.log("Done. Now running tests.");
-require("./tests.js");
+require("./tests.cjs");
