@@ -12,3 +12,4 @@ TdNode.d.ts
 index.d.ts
 .vscode
 tdlib/
+_*
