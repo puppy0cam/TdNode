@@ -40,9 +40,7 @@ export type String = string;
 export type int32 = number;
 export type int53 = number;
 export type double = number;
-/** You should convert this to BigInt if a calculation must be done on this number. When sending data of this type to TDLib, you should explicitly turn the value into a string */
-export type int64 = string;
-/** You should use Buffer.from(data, "base64") to decode this value. When transmitting a Buffer to tdlib, you should convert it into a base64 string with buffer.toString("base64") */
+export type int64 = bigint;
 export type bytes = string;
 //#endregion
 //#region constructors
