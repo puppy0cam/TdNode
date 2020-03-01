@@ -75,6 +75,7 @@ Napi::Object TdNode::JavaScriptManager::Init(Napi::Env env, Napi::Object exports
     Napi::Function func = DefineClass(env, "TdNode", {
         InstanceMethod("send", &TdNode::JavaScriptManager::tg_send),
         InstanceMethod("receive", &TdNode::JavaScriptManager::tg_receive),
+        InstanceMethod("receiveSync", &TdNode::JavaScriptManager::tg_receive_sync),
         StaticMethod("execute", &TdNode::JavaScriptManager::execute)
     });
     constructor = Napi::Persistent(func);
@@ -180,6 +181,15 @@ Napi::Value TdNode::JavaScriptManager::tg_receive(const Napi::CallbackInfo &info
         ReceiverAsyncWorker *worker = new ReceiverAsyncWorker(env, tg, timeout);
         worker->Queue();
         return scope.Escape(worker->GetPromise());
+    }
+}
+Napi::Value TdNode::JavaScriptManager::tg_receive_sync(const Napi::CallbackInfo &info) {
+    const Napi::Env env = info.Env();
+    td::Client::Response response = std::move(tg->receive(0.0));
+    if (response.id || response.object) {
+        return tg->ConvertResultToJavaScript(env, std::move(response));
+    } else {
+        return env.Null();
     }
 }
 Napi::Value TdNode::JavaScriptManager::execute(const Napi::CallbackInfo &info) {

@@ -42,6 +42,7 @@ namespace TdNode {
 
             void tg_send(const Napi::CallbackInfo &info);
             Napi::Value tg_receive(const Napi::CallbackInfo &info);
+            Napi::Value tg_receive_sync(const Napi::CallbackInfo &info);
             std::uint64_t next_request_id = 0;
 
             static Napi::Value execute(const Napi::CallbackInfo &info);

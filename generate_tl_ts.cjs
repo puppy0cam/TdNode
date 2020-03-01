@@ -138,6 +138,8 @@ export class TdNode {
     public constructor();
     /** Receive data from TDLib */
     public receive(timeout?: number | undefined): Promise<null | _CONSTRUCTORS>;
+    /** Receive data from TDLib if any is immediately available */
+    public receiveSync(): null | _CONSTRUCTORS;
     /** Sends data to TDLib */
     public send(request: _FUNCTIONS): void;
     /** Execute a request synchronously, will only work for certain requests. Not bound to any particular client */
