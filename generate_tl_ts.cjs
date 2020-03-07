@@ -54,8 +54,22 @@ for (const i of constructors) {
         result += createStarComment(i.description) + "\n";
     }
     result += `export interface ${i.name} {
-    "@type": "${i.name}";
+    "@type": "${i.name}";`;
+    let extra_tag_applicable = false;
+    thing: for (const j of classes) {
+        if (j.name === i.constructs) {
+            for (const funct of functions) {
+                if (funct.returns === j.name || funct.returns === i.name) {
+                    extra_tag_applicable = true;
+                    break thing;
+                }
+            }
+        }
+    }
+    if (extra_tag_applicable) {
+        result += `
     "@extra"?: undefined | bigint | number | string | object;`;
+    }
     for (const param of i.parameters) {
         if (param.description) {
             result += `
@@ -108,7 +122,7 @@ for (const i of functions) {
     }
     result += `export interface ${i.name} {
     "@type": "${i.name}";
-    "@extra"?: any;`;
+    "@extra"?: undefined | bigint | number | string | object;`;
     for (const param of i.parameters) {
         if (param.description) {
             result += "\n    " + createStarComment(param.description).replace(/\n/g, "\n    ");
