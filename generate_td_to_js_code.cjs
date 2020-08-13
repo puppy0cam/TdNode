@@ -28,7 +28,7 @@ Napi::Value TdNode::ToJavaScript::vector_(Napi::Env env, std::vector<T> value) {
 }
 
 Napi::Value TdNode::ToJavaScript::int64_(Napi::Env env, std::int64_t value) {
-    return env.Global().Get("BigInt").As<Napi::Function>().Call({ Napi::String::New(env, std::to_string(value)) });
+    return Napi::BigInt::New(env, value);
 }
 Napi::Value TdNode::ToJavaScript::int53_(Napi::Env env, std::int64_t value) {
     return Napi::Number::New(env, (double) value);

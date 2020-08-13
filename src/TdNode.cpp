@@ -144,7 +144,7 @@ void TdNode::JavaScriptManager::tg_send(const Napi::CallbackInfo &info) {
                 case napi_valuetype::napi_null:
                     break;
                 default:
-                    Napi::TypeError::New(info.Env(), "Request ID must be a string, bigint, or number").ThrowAsJavaScriptException();
+                    Napi::TypeError::New(info.Env(), "Request ID must be an object, string, bigint, or number").ThrowAsJavaScriptException();
                     return;
                 case napi_valuetype::napi_object:
                 case napi_valuetype::napi_bigint:
@@ -300,7 +300,7 @@ const TdNode::RequestExtraData::ValueType TdNode::RequestExtraData::GetType() co
 Napi::Value TdNode::RequestExtraData::GetValue(Napi::Env env) const noexcept {
     switch (type) {
         case BigInt:
-            return env.Global().Get("BigInt").As<Napi::Function>().Call({ Napi::String::New(env, std::to_string(*(std::int64_t *) value_ptr)) });
+            return Napi::BigInt::New(env, *(std::uint64_t *) value_ptr);
         case Number:
             return Napi::Number::New(env, *(double *) value_ptr);
         case String:
