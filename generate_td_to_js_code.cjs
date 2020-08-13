@@ -27,22 +27,22 @@ Napi::Value TdNode::ToJavaScript::vector_(Napi::Env env, std::vector<T> value) {
     return scope.Escape(result);
 }
 
-Napi::Value TdNode::ToJavaScript::int64_(Napi::Env env, std::int64_t value) {
+inline Napi::Value TdNode::ToJavaScript::int64_(Napi::Env env, std::int64_t value) {
     return Napi::BigInt::New(env, value);
 }
-Napi::Value TdNode::ToJavaScript::int53_(Napi::Env env, std::int64_t value) {
+inline Napi::Value TdNode::ToJavaScript::int53_(Napi::Env env, std::int64_t value) {
     return Napi::Number::New(env, (double) value);
 }
-Napi::Value TdNode::ToJavaScript::int32_(Napi::Env env, std::int32_t value) {
+inline Napi::Value TdNode::ToJavaScript::int32_(Napi::Env env, std::int32_t value) {
     return Napi::Number::New(env, value);
 }
-Napi::Value TdNode::ToJavaScript::double_(Napi::Env env, double value) {
+inline Napi::Value TdNode::ToJavaScript::double_(Napi::Env env, double value) {
     return Napi::Number::New(env, value);
 }
-Napi::Value TdNode::ToJavaScript::string_(Napi::Env env, std::string value) {
+inline Napi::Value TdNode::ToJavaScript::string_(Napi::Env env, std::string value) {
     return Napi::String::New(env, value);
 }
-Napi::Value TdNode::ToJavaScript::Bool_(Napi::Env env, bool value) {
+inline Napi::Value TdNode::ToJavaScript::Bool_(Napi::Env env, bool value) {
     return Napi::Boolean::New(env, value);
 }
 `;

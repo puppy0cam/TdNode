@@ -12,13 +12,13 @@ let result = `\
 #include "libraries.h"
 #include "js-to-td.h"
 
-const bool TdNode::ToTelegram::IsNotNullish(const Napi::Value value) {
+inline const bool TdNode::ToTelegram::IsNotNullish(const Napi::Value value) {
     return !value.IsNull() && !value.IsUndefined();
 }
-TdNode::ToTelegram::double_t TdNode::ToTelegram::double_(const Napi::Value value) {
+inline TdNode::ToTelegram::double_t TdNode::ToTelegram::double_(const Napi::Value value) {
     return value.As<const Napi::Number>().DoubleValue();
 }
-TdNode::ToTelegram::string_t TdNode::ToTelegram::string_(const Napi::Value value) {
+inline TdNode::ToTelegram::string_t TdNode::ToTelegram::string_(const Napi::Value value) {
     return value.As<const Napi::String>().Utf8Value();
 }
 TdNode::ToTelegram::int64_t TdNode::ToTelegram::int64_(const Napi::Value value) {
@@ -71,7 +71,7 @@ TdNode::ToTelegram::boolTrue_t TdNode::ToTelegram::boolTrue_(const Napi::Value v
         throw std::runtime_error("Value is not true");
     }
 }
-TdNode::ToTelegram::Bool_t TdNode::ToTelegram::Bool_(const Napi::Value value) {
+inline TdNode::ToTelegram::Bool_t TdNode::ToTelegram::Bool_(const Napi::Value value) {
     return value.As<Napi::Boolean>().Value();
 }
 TdNode::ToTelegram::bytes_t TdNode::ToTelegram::bytes_(const Napi::Value value) {

@@ -16,27 +16,27 @@ namespace TdNode {
         template <typename T, Napi::Value Callback(Napi::Env env, T value), const bool is_tdlib_value = true>
         Napi::Value vector_(Napi::Env env, std::vector<T> value);
 
-        Napi::Value int64_(Napi::Env env, std::int64_t value);
+        inline Napi::Value int64_(Napi::Env env, std::int64_t value);
         constexpr auto &&vector_int64_ = vector_<std::int64_t, &int64_, false>;
         constexpr auto &&vector_vector_int64_ = vector_<std::vector<std::int64_t>, &vector_int64_, false>;
 
-        Napi::Value int53_(Napi::Env env, std::int64_t value);
+        inline Napi::Value int53_(Napi::Env env, std::int64_t value);
         constexpr auto &&vector_int53_ = vector_<std::int64_t, &int53_, false>;
         constexpr auto &&vector_vector_int53_ = vector_<std::vector<std::int64_t>, &vector_int53_, false>;
 
-        Napi::Value int32_(Napi::Env env, std::int32_t value);
+        inline Napi::Value int32_(Napi::Env env, std::int32_t value);
         constexpr auto &&vector_int32_ = vector_<std::int32_t, &int32_, false>;
         constexpr auto &&vector_vector_int32_ = vector_<std::vector<std::int32_t>, &vector_int32_, false>;
 
-        Napi::Value double_(Napi::Env env, double value);
+        inline Napi::Value double_(Napi::Env env, double value);
         constexpr auto &&vector_double_ = vector_<double, &double_, false>;
         constexpr auto &&vector_vector_double_ = vector_<std::vector<double>, &vector_double_, false>;
 
-        Napi::Value string_(Napi::Env env, std::string value);
+        inline Napi::Value string_(Napi::Env env, std::string value);
         constexpr auto &&vector_string_ = vector_<std::string, &string_, false>;
         constexpr auto &&vector_vector_string_ = vector_<std::vector<std::string>, &vector_string_, false>;
 
-        Napi::Value Bool_(Napi::Env env, bool value);
+        inline Napi::Value Bool_(Napi::Env env, bool value);
         constexpr auto &&vector_Bool_ = vector_<bool, &Bool_, false>;
         constexpr auto &&vector_vector_Bool_ = vector_<std::vector<bool>, &vector_Bool_, false>;
 

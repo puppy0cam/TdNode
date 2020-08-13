@@ -13,20 +13,20 @@ let result = `\
 
 namespace TdNode {
     namespace ToTelegram {
-        const bool IsNotNullish(const Napi::Value value);
+        inline const bool IsNotNullish(const Napi::Value value);
         td::td_api::object_ptr<td::td_api::Function> AnyUnknownFunction(const Napi::Value value);
         td::td_api::object_ptr<td::td_api::Object> AnyUnknownObject(const Napi::Value value);
 
         #pragma region double
         using double_t = double;
-        double_t double_(const Napi::Value value);
+        inline double_t double_(const Napi::Value value);
 
         using Double_t = double_t;
         constexpr auto &&Double_ = double_;
         #pragma endregion
         #pragma region string
         using string_t = std::string;
-        string_t string_(const Napi::Value value);
+        inline string_t string_(const Napi::Value value);
 
         using String_t = string_t;
         constexpr auto &&String_ = string_;
@@ -62,7 +62,7 @@ namespace TdNode {
         boolTrue_t boolTrue_(const Napi::Value value);
 
         using Bool_t = bool;
-        Bool_t Bool_(const Napi::Value value);
+        inline Bool_t Bool_(const Napi::Value value);
         #pragma endregion
         #pragma region bytes
         using bytes_t = std::string;
