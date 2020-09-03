@@ -113,6 +113,7 @@ Napi::Value TdNode::ToJavaScript::${i.name}_(Napi::Env env, td::td_api::object_p
     }
     Napi::EscapableHandleScope scope(env);
     Napi::Object result = Napi::Object::New(env);
+    Napi::PropertyDescriptor symbolicTypeProperty = Napi::PropertyDescriptor::Value(Napi::Symbol::WellKnown(env, "toStringTag"), Napi::String::New(env, "${i.name}"), (napi_property_attributes) (napi_property_attributes::napi_default | napi_property_attributes::napi_writable | napi_property_attributes::napi_configurable));
     Napi::PropertyDescriptor typeProperty = Napi::PropertyDescriptor::Value("@type", Napi::String::New(env, "${i.name}"), (napi_property_attributes) (napi_property_attributes::napi_default | napi_property_attributes::napi_writable | napi_property_attributes::napi_configurable | napi_property_attributes::napi_enumerable));`;
     }
     for (const j of i.parameters) {
@@ -129,14 +130,14 @@ Napi::Value TdNode::ToJavaScript::${i.name}_(Napi::Env env, td::td_api::object_p
             result += `
     result`
         }
-        result += `.DefineProperties({ typeProperty, ${filteredParams.map(a=>a.name + '__').join(', ')} });`
+        result += `.DefineProperties({ typeProperty${i.name === 'error' ? '' : ', symbolicTypeProperty' }, ${filteredParams.map(a=>a.name + '__').join(', ')} });`
     } else {
         if (i.name === 'error') {
             result += `
     result.Value().DefineProperty(typeProperty);`
         } else {
             result += `
-    result.DefineProperty(typeProperty);`
+    result.DefineProperties({ typeProperty, symbolicTypeProperty });`
         }
     }
     if (i.name === 'error') {
