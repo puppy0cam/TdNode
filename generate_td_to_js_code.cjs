@@ -114,7 +114,7 @@ Napi::Value TdNode::ToJavaScript::${i.name}_(Napi::Env env, td::td_api::object_p
     Napi::EscapableHandleScope scope(env);
     Napi::Object result = Napi::Object::New(env);
     Napi::PropertyDescriptor symbolicTypeProperty = Napi::PropertyDescriptor::Value(Napi::Symbol::WellKnown(env, "toStringTag"), Napi::String::New(env, "${i.name}"), (napi_property_attributes) (napi_property_attributes::napi_default | napi_property_attributes::napi_writable | napi_property_attributes::napi_configurable));
-    Napi::PropertyDescriptor typeProperty = Napi::PropertyDescriptor::Value("@type", Napi::String::New(env, "${i.name}"), (napi_property_attributes) (napi_property_attributes::napi_default | napi_property_attributes::napi_writable | napi_property_attributes::napi_configurable | napi_property_attributes::napi_enumerable));`;
+    Napi::PropertyDescriptor typeProperty = Napi::PropertyDescriptor::Value("@type", Napi::String::New(env, "${i.name}"), (napi_property_attributes) (napi_property_attributes::napi_default | napi_property_attributes::napi_writable | napi_property_attributes::napi_configurable));`;
     }
     for (const j of i.parameters) {
         if (j.name === 'message' && i.name === 'error') continue;
