@@ -13,9 +13,6 @@ try {
     }
     throw "Bad type returned";
 } catch (e) {
-    if (e instanceof Error) {
-        throw "JavaScript Error object"
-    }
     if (typeof e !== "object" || e === null) {
         throw "Not an object";
     }

@@ -4,11 +4,11 @@ TdNode is a Node.JS interface for [TDLib](https://github.com/tdlib/td)
 
 It natively wraps around TDLib and eliminates the need for external dependencies such as tdjson.
 
-Currently, the module is only available on Windows, and community support would be appreciated to help improve `install.js` to support other platforms.
+Currently, the module is only available on Windows and ubuntu, and community support would be appreciated to help improve `install.js` to support other platforms.
 
 ## Usage
 
-The module exports a TelegramClient class. It is recommended that immediately upon loading the module, you use the static sync setLogVerbosityLevel method in order to disable TDLib logging.
+The module exports a TdNode class. It is recommended that immediately upon loading the module, you use the static sync setLogVerbosityLevel method in order to disable TDLib logging.
 ```JavaScript
 TdNode.execute({
     "@type": "setLogVerbosityLevel",
@@ -87,7 +87,7 @@ main();
 
 Methods that can be executed synchronously may be done with the static `execute` method.
 The `execute` method does not support the `@extra` field.
-If an error is returned by the static execute method, the value will be thrown as is without being wrapped into an Error object.
+If an error is returned by the static execute method, the value will be thrown instead of returned.
 
 Note: Most fields in TDLib are required, and leaving those values null or undefined may lead to unexpected behaviour up to and including a crash
 without `process.on("exit")` listeners being called.
@@ -138,4 +138,5 @@ For primitive types in TDLib, here is a table for what types you can expect to s
 | boolTrue | boolean |
 | Bool | boolean |
 | vector | Array |
+| error | Error |
 

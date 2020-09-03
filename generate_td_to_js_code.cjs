@@ -96,22 +96,60 @@ function wrapConstructorAssignmentFieldType(type, dataRef) {
     }
 }
 for (const i of constructors) {
-    result += `
+    if (i.name === 'error') {
+        result += `
+Napi::Value TdNode::ToJavaScript::${i.name}_(Napi::Env env, td::td_api::object_ptr<td::td_api::${i.name}> value) {
+    if (!value) {
+        return env.Null();
+    }
+    Napi::EscapableHandleScope scope(env);
+    Napi::Error result = Napi::Error::New(env, value->message_);
+    Napi::PropertyDescriptor typeProperty = Napi::PropertyDescriptor::Value("@type", Napi::String::New(env, "${i.name}"), (napi_property_attributes) (napi_property_attributes::napi_default | napi_property_attributes::napi_writable | napi_property_attributes::napi_configurable));`;
+    } else {
+        result += `
 Napi::Value TdNode::ToJavaScript::${i.name}_(Napi::Env env, td::td_api::object_ptr<td::td_api::${i.name}> value) {
     if (!value) {
         return env.Null();
     }
     Napi::EscapableHandleScope scope(env);
     Napi::Object result = Napi::Object::New(env);
-    result.Set("@type", Napi::String::New(env, "${i.name}"));`;
-    for (const j of i.parameters) {
-        result += `
-    result.Set("${j.name}", ${getFunctionForType(j.type)}(env, ${wrapConstructorAssignmentFieldType(j.type, `value->${j.name}_`)}));`;
+    Napi::PropertyDescriptor typeProperty = Napi::PropertyDescriptor::Value("@type", Napi::String::New(env, "${i.name}"), (napi_property_attributes) (napi_property_attributes::napi_default | napi_property_attributes::napi_writable | napi_property_attributes::napi_configurable | napi_property_attributes::napi_enumerable));`;
     }
-    result += `
+    for (const j of i.parameters) {
+        if (j.name === 'message' && i.name === 'error') continue;
+        result += `
+    Napi::PropertyDescriptor ${j.name}__ = Napi::PropertyDescriptor::Value("${j.name}", ${getFunctionForType(j.type)}(env, ${wrapConstructorAssignmentFieldType(j.type, `value->${j.name}_`)}), (napi_property_attributes) (napi_property_attributes::napi_default | napi_property_attributes::napi_writable | napi_property_attributes::napi_configurable${i.name === 'error' ? '' : ' | napi_property_attributes::napi_enumerable'}));`;
+    }
+    const filteredParams = i.parameters.filter(a=> !(i.name === 'error' && a.name === 'message'));
+    if (filteredParams.length) {
+        if (i.name === 'error') {
+            result += `
+    result.Value()`
+        } else {
+            result += `
+    result`
+        }
+        result += `.DefineProperties({ typeProperty, ${filteredParams.map(a=>a.name + '__').join(', ')} });`
+    } else {
+        if (i.name === 'error') {
+            result += `
+    result.Value().DefineProperty(typeProperty);`
+        } else {
+            result += `
+    result.DefineProperty(typeProperty);`
+        }
+    }
+    if (i.name === 'error') {
+        result += `
+    return scope.Escape(result.Value());
+}
+`
+    } else {
+        result += `
     return scope.Escape(result);
 }
 `
+    }
 }
 for (const i of functions) {
     result += `
