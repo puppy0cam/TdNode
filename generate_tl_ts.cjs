@@ -33,14 +33,23 @@ let result = `\
 // tslint:disable:interface-name
 // tslint:disable:max-line-length
 //#region primitives
+/** A primitive type */
 export type Bool = boolean;
+/** A primitive type */
 export type boolTrue = true;
+/** A primitive type */
 export type boolFalse = false;
+/** A primitive type */
 export type String = string;
+/** A primitive type */
 export type int32 = number;
+/** A primitive type */
 export type int53 = number;
+/** A primitive type */
 export type double = number;
+/** A primitive type */
 export type int64 = bigint;
+/** A primitive type */
 export type bytes = string;
 //#endregion
 //#region constructors
@@ -54,6 +63,10 @@ for (const i of constructors) {
         result += createStarComment(i.description) + "\n";
     }
     result += `export interface ${i.name} {
+    /**
+     * Helps consuming code know that this is a ${i.name} object
+     */
+    "@type": "${i.name}";
     /**
      * Applies to objects received from TdNode.
      * This does not require you to specify it yourself
@@ -72,6 +85,10 @@ for (const i of constructors) {
     }
     if (extra_tag_applicable) {
         result += `
+    /**
+     * Extra data from the request that generated this result.
+     * This will only be present on the top level object of the received data.
+     */
     "@extra"?: undefined | bigint | number | string | object;`;
     }
     for (const param of i.parameters) {
@@ -85,6 +102,9 @@ for (const i of constructors) {
     result += `
 }
 export namespace ${i.name} {
+    /**
+     * The type of class this constructor belongs to.
+     */
     export type constructs = ${i.constructs};
 }
 `;
@@ -105,6 +125,9 @@ for (const i of classes) {
     }
     result += `export type ${i.name} = ${i.constructors.join(" | ") || "never"};
 export namespace ${i.name} {
+    /**
+     * A list of the functions that return this class.
+     */
     export type functions = ${i.functions.join(" | ") || "never"};
 }
 `;
@@ -125,7 +148,13 @@ for (const i of functions) {
         result += createStarComment(i.description) + "\n";
     }
     result += `export interface ${i.name} {
+    /**
+     * Helps consuming code know that this is a ${i.name} object.
+     */
     "@type": "${i.name}";
+    /**
+     * The value here will be added to the top level of the object received upon the request being finished.
+     */
     "@extra"?: undefined | bigint | number | string | object;`;
     for (const param of i.parameters) {
         if (param.description) {
@@ -137,6 +166,9 @@ for (const i of functions) {
     result += `
 }
 export namespace ${i.name} {
+    /**
+     * If successful, the function will result in this type
+     */
     export type returns = ${i.returns};
 }
 `;
@@ -152,7 +184,12 @@ export type _FUNCTIONS = ${[...all_function_names_in_functions].join(" | ") || "
  */
 export class TdNode {
     public constructor();
-    /** Receive data from TDLib */
+    /**
+     * Receive data from TDLib
+     * @param timeout the amount of seconds to wait for data from tdlib until it gives up and resolves the promise with null.
+     * Depending on your CPU and how many clients are receiving simultaniously, this could exceed the specified time.
+     * Defaults to 60 seconds.
+     */
     public receive(timeout?: number | undefined): Promise<null | _CONSTRUCTORS>;
     /** Receive data from TDLib if any is immediately available */
     public receiveSync(): null | _CONSTRUCTORS;
