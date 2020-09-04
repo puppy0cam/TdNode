@@ -1,6 +1,7 @@
 #ifndef _TdNode_LIBRARIES_HEADER_PACK
 #define _TdNode_LIBRARIES_HEADER_PACK
 
+#include <iostream>
 #include <napi.h>
 #include <td/telegram/td_api.hpp>
 #include <td/telegram/td_api.h>
