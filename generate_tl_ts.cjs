@@ -54,7 +54,11 @@ for (const i of constructors) {
         result += createStarComment(i.description) + "\n";
     }
     result += `export interface ${i.name} {
-    "@type": "${i.name}";`;
+    /**
+     * Applies to objects received from TdNode.
+     * This does not require you to specify it yourself
+     */
+    [Symbol.toStringTag]?: "${i.name}";`;
     let extra_tag_applicable = false;
     thing: for (const j of classes) {
         if (j.name === i.constructs) {
