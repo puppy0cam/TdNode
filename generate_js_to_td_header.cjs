@@ -74,15 +74,9 @@ namespace TdNode {
         #pragma region vector
         template <class T>
         using vector_t = std::vector<T>;
-        template <auto Callback(const Napi::Value)>
-        vector_t<std::invoke_result_t<decltype(Callback), const Napi::Value>>
-        vector_(const Napi::Value value);
 
         template <class T>
         using Vector_t = vector_t<T>;
-
-        template <auto Callback(const Napi::Value)>
-        constexpr auto &&Vector_ = vector_<Callback>;
         #pragma endregion`;
 
 for (const i of constructors) {

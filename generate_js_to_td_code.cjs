@@ -89,17 +89,24 @@ TdNode::ToTelegram::bytes_t TdNode::ToTelegram::bytes_(const Napi::Value value) 
         return value.As<Napi::String>().Utf8Value();
     }
 }
-template<auto (*Callback)(Napi::Value)>
-TdNode::ToTelegram::vector_t<std::invoke_result_t<decltype(Callback), const Napi::Value>>
-TdNode::ToTelegram::vector_(Napi::Value value) {
-    const Napi::Array array = value.As<const Napi::Array>();
-    const uint32_t size = array.Length();
-    vector_t<std::invoke_result_t<decltype(Callback), const Napi::Value>> result(size);
-    for (uint32_t i = 0; i < size; i++) {
-        result[i] = std::move(Callback(array[i]));
+namespace TdNode {
+    namespace ToTelegram {
+        template<auto (*Callback)(Napi::Value)>
+        vector_t<std::invoke_result_t<decltype(Callback), const Napi::Value>>
+        vector_(Napi::Value value) {
+            const Napi::Array array = value.As<const Napi::Array>();
+            const uint32_t size = array.Length();
+            vector_t<std::invoke_result_t<decltype(Callback), const Napi::Value>> result(size);
+            for (uint32_t i = 0; i < size; i++) {
+                result[i] = std::move(Callback(array[i]));
+            }
+            return result;
+        }
+        template <auto Callback(const Napi::Value)>
+        constexpr auto &&Vector_ = vector_<Callback>;
     }
-    return result;
 }
+
 
 `;
 /** @param {import("./parsing_tl").TD_API.classParamType | import("./parsing_tl").TD_API.constructorParamType | import("./parsing_tl").TD_API.vectorParamType} type */
