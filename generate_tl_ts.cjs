@@ -64,11 +64,11 @@ for (const i of constructors) {
     }
     result += `export interface ${i.name} {
     /**
-     * Helps consuming code know that this is a ${i.name} object
+     * Helps consuming code know that this is a {@link ${i.name}} object
      */
     "@type": "${i.name}";
     /**
-     * Applies to objects received from TdNode.
+     * Applies to objects received from {@link TdNode}.
      * This does not require you to specify it yourself
      */
     [Symbol.toStringTag]?: "${i.name}";`;
@@ -149,7 +149,7 @@ for (const i of functions) {
     }
     result += `export interface ${i.name} {
     /**
-     * Helps consuming code know that this is a ${i.name} object.
+     * Helps consuming code know that this is a {@link ${i.name}} object.
      */
     "@type": "${i.name}";
     /**
@@ -198,6 +198,5 @@ export class TdNode {
     /** Execute a request synchronously, will only work for certain requests. Not bound to any particular client */
     public static execute(request: _FUNCTIONS): _CONSTRUCTORS;
 }
-
 `;
 exports.result = result;
