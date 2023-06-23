@@ -12,7 +12,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "cmake-js": "^6.0.0",
+    "cmake-js": "^7.2.1",
     "node-addon-api": "^3.0.1"
   },
   "exports": {
