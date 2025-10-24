@@ -1,5 +1,7 @@
 # TdNode
 
+This project is no longer maintained
+
 TdNode is a Node.JS interface for [TDLib](https://github.com/tdlib/td)
 
 It natively wraps around TDLib and eliminates the need for external dependencies such as tdjson.
